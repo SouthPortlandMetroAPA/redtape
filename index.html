@@ -317,6 +317,56 @@
   }
   .download-banner .db-arrow { color: var(--spm-blue); font-size: 1.2rem; }
 
+  /* ── Upload gallery (multi-upload per item) ─────────────────────── */
+  .upload-gallery {
+    display: grid; gap: 10px; margin-bottom: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+  .upload-tile {
+    position: relative; border: 1px solid var(--border);
+    border-radius: 10px; overflow: hidden; background: #fff;
+    display: flex; flex-direction: column;
+  }
+  .upload-tile .tile-img {
+    display: block; aspect-ratio: 4/3; background: #000;
+    overflow: hidden;
+  }
+  .upload-tile .tile-img img {
+    width: 100%; height: 100%; object-fit: cover;
+    transition: transform 0.18s;
+  }
+  .upload-tile .tile-img:hover img { transform: scale(1.04); }
+  .upload-tile .tile-meta {
+    font-size: 0.72rem; color: var(--text-dim);
+    padding: 6px 8px; line-height: 1.3;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .upload-tile .tile-delete {
+    position: absolute; top: 6px; right: 6px;
+    width: 28px; height: 28px; border-radius: 50%;
+    background: rgba(0,0,0,0.65); color: #fff; border: 0;
+    font-size: 1.1rem; line-height: 1; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0; transition: background 0.12s;
+    touch-action: manipulation;
+  }
+  .upload-tile .tile-delete:hover { background: var(--bad); }
+  .upload-tile .tile-delete:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+  .add-another-label {
+    font-size: 0.78rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--text-dim); margin-bottom: 8px; margin-top: 4px;
+  }
+
+  .stamped-note {
+    background: #f0fdf4; border-left: 4px solid var(--ok);
+    color: #14532d; padding: 10px 12px;
+    border-radius: 10px; margin-top: 4px;
+    font-size: 0.88rem; line-height: 1.5;
+  }
+  .stamped-note strong { color: var(--ok); }
+
   /* ── Source picker (PaperTrail two-button pattern) ──────────────── */
   .source-picker {
     display: grid; gap: 10px;
@@ -511,7 +561,7 @@
      (see Slate 3.54 for the bug this fixes).
    ══════════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.6';
+const APP_VERSION = '0.7';
 const APP_NAME = 'RedTape';
 const SB_URL = 'https://dqzbekoaysgaiqljueac.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxemJla29heXNnYWlxbGp1ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzA5NzgsImV4cCI6MjA5MDc0Njk3OH0.cCdGxZ4zEFzU_r6lWSDeoNWG67Q4MSYCAtpds035dfU';
@@ -694,10 +744,12 @@ async function loadAssignments() {
   }
 }
 
-function statusOf(upload) {
-  if (!upload) return 'pending';
-  if (upload.approved_at) return 'approved';
-  return 'uploaded';
+/* v0.7+: items now have uploads[] (array) and item-level stamped_at.
+   statusOf(item) replaces the old statusOf(upload). */
+function statusOf(item) {
+  if (item.stamped_at) return 'approved';
+  if (item.uploads && item.uploads.length) return 'uploaded';
+  return 'pending';
 }
 function statusGlyph(s) { return s === 'pending' ? '✕' : (s === 'approved' ? '✓' : '⏳'); }
 function statusLabel(s) { return s === 'pending' ? 'Not filed' : (s === 'approved' ? 'Stamped' : 'Awaiting review'); }
@@ -706,7 +758,7 @@ function progressOf(items) {
   const total = items.length;
   let filed = 0, stamped = 0;
   for (const it of items) {
-    const s = statusOf(it.upload);
+    const s = statusOf(it);
     if (s === 'approved') { stamped++; filed++; }
     else if (s === 'uploaded') filed++;
   }
@@ -767,14 +819,17 @@ function assignmentCardHtml(a) {
 }
 
 function itemRowHtml(assignmentId, it) {
-  const st = statusOf(it.upload);
+  const st = statusOf(it);
+  const n  = (it.uploads || []).length;
+  // Show "N submitted" when an item has multiple uploads (cert-form pattern).
+  const countLine = n > 1 ? ' &middot; ' + n + ' submitted' : '';
   return '<button type="button" class="item-row ' + st + '" '
     + 'data-assignment-id="' + assignmentId + '" data-item-id="' + it.item_id + '" '
     + 'aria-label="' + esc(it.title) + ', ' + statusLabel(st) + '">'
     + '<span class="item-status" aria-hidden="true">' + statusGlyph(st) + '</span>'
     + '<span class="item-body">'
     + '  <span class="item-title">' + esc(it.title) + '</span>'
-    + '  <span class="item-state">' + statusLabel(st) + '</span>'
+    + '  <span class="item-state">' + statusLabel(st) + countLine + '</span>'
     + (it.description ? '<span class="item-desc">' + esc(it.description) + '</span>' : '')
     + (it.blank_form_r2_path
         ? '<a class="item-download" href="' + esc(R2_URL + '/' + it.blank_form_r2_path) + '" target="_blank" rel="noopener" download onclick="event.stopPropagation()">'
@@ -786,13 +841,28 @@ function itemRowHtml(assignmentId, it) {
     + '</button>';
 }
 
-/* ── Item modal: upload / view / replace / delete ───────────────────── */
+/* ── Item modal (v0.7+): gallery + add-another, item-level stamp ──────
+   Layout
+     [Step pill: status]
+     <h3>Item title</h3>
+     <p>Event · team</p>
+     [Download form banner if blank uploaded]
+     ── gallery (if any uploads) ──
+     [thumb] [thumb] [thumb]…  each with × to remove
+     ── add new (if not stamped) ──
+     [Take photo] [Library]  or single [Upload]
+     [preview img]
+     [Cancel] [Save]
+   Stamped items go read-only — no add, no delete (admin un-stamps to
+   unlock changes). */
 function openItemModal(assignmentId, itemId) {
   const a = _data.assignments.find(x => x.assignment_id === assignmentId);
   if (!a) return;
   const it = a.items.find(x => x.item_id === itemId);
   if (!it) return;
-  const st = statusOf(it.upload);
+  const st = statusOf(it);
+  const isStamped = st === 'approved';
+  const uploads = it.uploads || [];
   const box = $('modalBox');
 
   let body = '<span class="step-pill">' + statusLabel(st) + '</span>'
@@ -812,22 +882,59 @@ function openItemModal(assignmentId, itemId) {
       + '</a>';
   }
 
-  if (st === 'pending') {
-    body += renderUploadPicker();
-  } else {
-    body += renderUploadView(it.upload, st === 'approved');
+  // Existing-uploads gallery.
+  if (uploads.length) {
+    body += '<div class="upload-gallery" role="list" aria-label="Submitted photos">';
+    for (const u of uploads) {
+      body += renderUploadTile(u, isStamped);
+    }
+    body += '</div>';
   }
+
+  // Add-photo section (suppressed when stamped).
+  if (isStamped) {
+    body += '<div class="stamped-note">'
+      + '<strong>Stamped by your operator.</strong> '
+      + 'To add or remove submissions, ask the operator to un-stamp this item first.'
+      + '</div>';
+    body += '<div class="btn-row" style="margin-top:14px;justify-content:flex-end">'
+      + '<button type="button" class="btn btn-primary" onclick="closeModal()">Close</button>'
+      + '</div>';
+  } else {
+    if (uploads.length) {
+      body += '<div class="add-another-label">Add another submission</div>';
+    }
+    body += renderUploadPicker();
+  }
+
   box.innerHTML = body;
   openModal();
 
-  if (st === 'pending') {
+  // Wire delete buttons on each tile (no-op when stamped).
+  if (!isStamped) {
+    box.querySelectorAll('.upload-tile .tile-delete').forEach(btn => {
+      btn.onclick = (e) => { e.stopPropagation(); deleteUpload(parseInt(btn.dataset.id, 10)); };
+    });
     wireUpload(assignmentId, itemId);
-  } else {
-    const delBtn = $('deleteBtn');
-    if (delBtn) delBtn.onclick = () => deleteUpload(it.upload.id);
-    const repBtn = $('replaceBtn');
-    if (repBtn) repBtn.onclick = () => startReplace(assignmentId, itemId);
   }
+}
+
+function renderUploadTile(u, isStamped) {
+  const url = R2_URL + '/' + u.r2_path;
+  return '<div class="upload-tile" role="listitem">'
+    + '<a href="' + esc(url) + '" target="_blank" rel="noopener" class="tile-img">'
+    +   '<img src="' + esc(url) + '" alt="Submitted photo">'
+    + '</a>'
+    + (isStamped ? '' :
+        '<button type="button" class="tile-delete" data-id="' + u.id + '" aria-label="Remove this submission">'
+        + '<span aria-hidden="true">&times;</span>'
+        + '</button>'
+      )
+    + '<div class="tile-meta">'
+    +   (u.uploaded_by_name ? esc(u.uploaded_by_name) + ' · ' : '')
+    +   esc(fmtTimestamp(u.uploaded_at))
+    + '</div>'
+    + '</div>';
 }
 
 function renderUploadPicker() {
@@ -862,44 +969,6 @@ function renderUploadPicker() {
     +   '<button type="button" class="btn btn-primary" id="saveBtn" disabled>Save</button>'
     + '</div>';
   return h;
-}
-
-function renderUploadView(u, isApproved) {
-  const url = R2_URL + '/' + u.r2_path;
-  return '<div class="img-wrap">'
-    + '<img src="' + esc(url) + '" class="preview-img" alt="Uploaded paperwork">'
-    + (isApproved ? '<div class="stamp-overlay" aria-hidden="true">STAMPED</div>' : '')
-    + '</div>'
-    + '<div class="meta-line">'
-    +   'Uploaded ' + esc(fmtTimestamp(u.uploaded_at))
-    +   (u.uploaded_by_name ? ' by ' + esc(u.uploaded_by_name) : '')
-    +   (isApproved ? '<br>Stamped ' + esc(fmtTimestamp(u.approved_at)) : '')
-    + '</div>'
-    + '<div id="uploadStatus" class="status" role="status" aria-live="polite"></div>'
-    + '<div class="btn-row" style="margin-top:14px;justify-content:flex-end">'
-    +   '<button type="button" class="btn btn-outline" onclick="closeModal()">Close</button>'
-    +   (!isApproved ? '<button type="button" class="btn btn-danger btn-sm" id="deleteBtn">Delete</button>' : '')
-    +   (!isApproved ? '<button type="button" class="btn btn-primary btn-sm" id="replaceBtn">Replace</button>' : '')
-    + '</div>';
-}
-
-function startReplace(assignmentId, itemId) {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'image/*';
-  input.onchange = async () => {
-    const f = input.files && input.files[0]; if (!f) return;
-    try {
-      setStatus('uploadStatus', '<span class="spinner"></span>Preparing image&hellip;', 'progress');
-      const { blob, width, height } = await compressImage(f);
-      _pendingBlob = blob;
-      _pendingMeta = { width, height, bytes: blob.size, type: blob.type || 'image/jpeg' };
-      await doUpload(assignmentId, itemId);
-    } catch (err) {
-      setStatus('uploadStatus', 'Image error: ' + err.message, 'error');
-    }
-  };
-  input.click();
 }
 
 function openModal() {
@@ -986,28 +1055,43 @@ async function doUpload(assignmentId, itemId) {
     });
     if (!db.ok) throw new Error('Record failed (' + db.status + ': ' + (await db.text()).slice(0, 120) + ')');
     _pendingBlob = null; _pendingMeta = null;
-    closeModal();
-    toast('✓ Filed. Awaiting review.');
+    // Reload + reopen modal so captain can immediately add another submission
+    // for this same item (cert-form pattern: many sigs per item).
+    toast('✓ Filed.');
     await loadAssignments();
+    openItemModal(assignmentId, itemId);
   } catch (e) {
     setStatus('uploadStatus', 'Failed: ' + e.message, 'error');
   }
 }
 
 async function deleteUpload(uploadId) {
-  if (!confirm('Remove this submission? You can re-upload after.')) return;
-  setStatus('uploadStatus', '<span class="spinner"></span>Removing&hellip;', 'progress');
+  if (!confirm('Remove this submission? Other photos for this item stay in place.')) return;
+  // Capture the current cell so we can re-open the modal after reload.
+  const open = (() => {
+    if (!_data) return null;
+    for (const a of _data.assignments) {
+      for (const it of a.items) {
+        if ((it.uploads || []).some(u => u.id === uploadId)) {
+          return { assignmentId: a.assignment_id, itemId: it.item_id };
+        }
+      }
+    }
+    return null;
+  })();
   try {
     const r = await fetch(SB_URL + '/rest/v1/rpc/captain_delete_upload', {
       method: 'POST', headers: HEADERS_WRITE,
       body: JSON.stringify({ p_upload_id: uploadId, p_apa_number: _identity.apa_number })
     });
     if (!r.ok) throw new Error('Delete failed (' + r.status + ')');
-    closeModal();
     toast('Removed.');
     await loadAssignments();
+    // Re-open the same cell so captain can keep adding/removing in one flow.
+    if (open) openItemModal(open.assignmentId, open.itemId);
+    else closeModal();
   } catch (e) {
-    setStatus('uploadStatus', 'Failed: ' + e.message, 'error');
+    toast('Failed: ' + e.message);
   }
 }
 
