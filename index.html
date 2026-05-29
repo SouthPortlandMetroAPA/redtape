@@ -1,311 +1,240 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>RedTape — APA Paperwork</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<meta name="theme-color" content="#fffdf7">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#ea002a">
+<title>RedTape</title>
+<meta name="description" content="Submit APA paperwork — South Portland Metro APA">
 <style>
   /* ══════════════════════════════════════════════════════════════════════
-     RedTape — captain-facing paperwork portal (v0.2)
-     Brand: a deliberately bureaucratic "official records desk" aesthetic.
-     Letterhead header, serif headings, manila-paper accents, a STAMPED
-     overlay on approved uploads. Mobile-first; everything tappable hits
-     44×44 px; respects prefers-reduced-motion; aria-live status regions.
+     RedTape v0.4 — captain-facing paperwork portal.
+     Restyled to match the PaperTrail / BreakOut / Leaderboard family:
+     SPM red→blue gradient header, system font, pill buttons, soft-shadow
+     cards, status colors aligned with the rest of the suite. The bureau-
+     cracy aesthetic (manila paper, Georgia serif, FORM RT-001 stamp) is
+     retired in favor of brand consistency across the captain-facing apps.
      ══════════════════════════════════════════════════════════════════════ */
-
   :root {
-    /* Surfaces */
-    --bg: #f3f4f6;
-    --card: #ffffff;
-    --paper: #fffdf7;            /* manila-ish */
-    --paper-tint: #fef7e6;
-    /* Text */
-    --text: #1f2937;
-    --ink: #1f2937;
-    --muted: #6b7280;
-    --muted-strong: #4b5563;
-    /* Border */
-    --border: #e5e7eb;
+    --spm-red:   #ea002a;
+    --spm-blue:  #0031a1;
+    --text:      #111827;
+    --text-dim:  #6b7280;
+    --border:    #e5e7eb;
     --border-strong: #d1d5db;
-    /* Brand */
-    --primary: #b91c1c;
-    --primary-dark: #991b1b;
-    --stamp: #b91c1c;
-    /* Status */
-    --ok: #16a34a;
-    --ok-bg: #dcfce7;
-    --warn: #d97706;
-    --warn-bg: #fef3c7;
-    --bad: #dc2626;
-    --bad-bg: #fee2e2;
-    --urgent: #c2410c;
-    /* Scale */
-    --radius-sm: 4px;
-    --radius-md: 8px;
-    --radius-lg: 12px;
-    --shadow-sm: 0 1px 3px rgba(0,0,0,0.05);
-    --shadow-md: 0 2px 8px rgba(0,0,0,0.08);
-    --shadow-lg: 0 10px 30px rgba(0,0,0,0.18);
-    --tap: 44px;
+    --bg:        #f3f4f6;
+    --bg-card:   #ffffff;
+    --ok:        #16a34a;
+    --warn:      #ca8a04;
+    --bad:       #dc2626;
+    --urgent:    #b91c1c;
+    --radius:    14px;
+    --pill:      999px;
+    --tap:       44px;
   }
-
-  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-  html { font-size: 16px; -webkit-text-size-adjust: 100%; }
-  html, body {
-    background: var(--bg); color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    line-height: 1.5;
-  }
+  *, *::before, *::after { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  html { -webkit-text-size-adjust: 100%; }
   body {
+    font-family: system-ui, -apple-system, 'Segoe UI', Roboto, "Helvetica Neue", sans-serif;
+    color: var(--text); background: var(--bg); line-height: 1.5;
     min-height: 100vh; min-height: 100dvh;
-    padding-bottom: 40px;
-    /* iOS safe-area */
+    padding-bottom: 32px;
     padding-left: env(safe-area-inset-left);
     padding-right: env(safe-area-inset-right);
   }
 
-  /* Page chrome */
-  .page { max-width: 560px; margin: 0 auto; padding: 12px; }
+  /* ── Header (matches PaperTrail / BreakOut / Leaderboard) ───────── */
+  .header {
+    background: linear-gradient(135deg, var(--spm-red) 0%, var(--spm-blue) 100%);
+    color: #fff; padding: 16px 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  }
+  .header-inner {
+    max-width: 720px; margin: 0 auto;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .header h1 {
+    font-size: 1.15rem; font-weight: 900; margin: 0;
+    letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: 8px;
+  }
+  .header h1 .brand-dot {
+    display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,0.25);
+  }
+  .header .who {
+    font-size: 0.78rem; opacity: 0.92; text-align: right;
+    min-width: 0; line-height: 1.35;
+  }
+  .header .who strong { font-weight: 700; }
+  .header .who-row {
+    display: flex; align-items: center; gap: 8px;
+    justify-content: flex-end; flex-wrap: wrap;
+  }
+  .header .who button {
+    background: rgba(255,255,255,0.18); color: #fff; border: 0;
+    padding: 5px 10px; border-radius: var(--pill);
+    font: inherit; font-size: 0.74rem; font-weight: 700; cursor: pointer;
+    letter-spacing: 0.02em;
+  }
+  .header .who button:hover { background: rgba(255,255,255,0.28); }
 
-  /* ── Letterhead header ─────────────────────────────────────────────── */
-  header.letterhead {
-    background: var(--paper);
-    border: 1px solid var(--ink);
-    border-radius: var(--radius-sm);
-    padding: 16px 18px 14px;
-    margin-bottom: 14px;
-    box-shadow: var(--shadow-md);
-  }
-  .letterhead-top {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px; padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 10px;
-  }
-  .eyebrow {
-    font-size: 0.7rem; font-weight: 700; color: var(--muted-strong);
-    text-transform: uppercase; letter-spacing: 0.16em;
-    flex: 1; min-width: 0;
-  }
-  .form-no {
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 0.68rem; color: var(--muted);
-    letter-spacing: 0.06em; white-space: nowrap;
-  }
-  .letterhead h1 {
-    font-size: 1.85rem; font-weight: 900; letter-spacing: -0.01em;
-    color: var(--ink); font-family: Georgia, "Times New Roman", serif;
-    line-height: 1.1;
-  }
-  .letterhead h1 .red { color: var(--primary); }
-  .letterhead .sub {
-    color: var(--muted-strong); font-size: 0.88rem; margin-top: 4px;
-    font-style: italic;
-  }
+  /* ── Main container ──────────────────────────────────────────────── */
+  main { max-width: 720px; margin: 0 auto; padding: 16px; }
 
-  /* ── Cards & sections ──────────────────────────────────────────────── */
   .card {
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: var(--radius-sm); padding: 18px;
-    margin-bottom: 12px; box-shadow: var(--shadow-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
   }
-  .card h2 {
-    font-size: 0.96rem; font-weight: 800; color: var(--ink);
-    text-transform: uppercase; letter-spacing: 0.04em;
-    border-bottom: 2px solid var(--ink); padding-bottom: 6px;
-    margin-bottom: 12px; font-family: Georgia, serif;
-    display: flex; align-items: baseline; justify-content: space-between;
-    gap: 8px;
-  }
+  .card h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 800; }
   .card h2 .meta {
-    font-size: 0.74rem; font-weight: 600; color: var(--muted);
-    text-transform: none; letter-spacing: 0;
-    font-family: inherit;
+    font-size: 0.74rem; font-weight: 600; color: var(--text-dim);
+    margin-left: 6px; letter-spacing: 0;
   }
-  .card .intro { color: var(--muted-strong); font-size: 0.92rem; margin-bottom: 16px; }
-  .hint { color: var(--muted); font-size: 0.84rem; }
+  .hint { color: var(--text-dim); font-size: 0.86rem; }
 
-  /* ── Form fields ───────────────────────────────────────────────────── */
-  .field { margin-bottom: 14px; }
-  .field label {
-    display: block; font-size: 0.7rem; font-weight: 800;
-    text-transform: uppercase; letter-spacing: 0.08em;
-    color: var(--muted-strong); margin-bottom: 6px;
+  /* ── Identity sign-in card (matches PaperTrail) ──────────────────── */
+  .id-card { text-align: center; }
+  .id-card h2 { font-size: 1.2rem; margin-bottom: 6px; }
+  .id-card p { color: var(--text-dim); font-size: 0.92rem; margin: 0 0 14px; line-height: 1.5; }
+  .id-input-row { display: flex; gap: 8px; }
+  .id-input {
+    flex: 1; font: inherit; font-size: 1rem; padding: 12px 14px;
+    border: 1.5px solid var(--border-strong); border-radius: 10px;
+    background: #fff; color: var(--text);
+    min-height: var(--tap);
   }
-  .field input[type="text"], .field input[type="number"] {
-    width: 100%; min-height: var(--tap);
-    padding: 10px 12px; font: inherit; font-size: 1rem;
-    border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
-    background: var(--paper); color: var(--text);
+  .id-input:focus { outline: none; border-color: var(--spm-blue); }
+  .id-help {
+    text-align: left; font-size: 0.78rem; color: var(--text-dim);
+    margin-top: 10px; line-height: 1.45;
   }
-  .field input:focus { outline: 2px solid var(--ink); outline-offset: -1px; }
-  .field input:focus-visible { outline: 2px solid var(--ink); outline-offset: -1px; }
-  .field .help { color: var(--muted); font-size: 0.78rem; margin-top: 6px; line-height: 1.4; }
 
-  /* ── Buttons ───────────────────────────────────────────────────────── */
+  /* ── Buttons (PaperTrail pill style) ─────────────────────────────── */
   .btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-    min-height: var(--tap); padding: 10px 18px;
-    border: 1px solid var(--ink); border-radius: var(--radius-sm);
-    font: inherit; font-size: 0.94rem; font-weight: 700;
-    cursor: pointer; touch-action: manipulation;
-    background: var(--ink); color: var(--paper);
-    text-transform: uppercase; letter-spacing: 0.04em;
-    transition: background 0.12s, transform 0.05s;
+    padding: 11px 18px; border-radius: var(--pill);
+    font: inherit; font-size: 0.92rem; font-weight: 800;
+    border: 0; cursor: pointer; touch-action: manipulation;
+    min-height: var(--tap);
+    display: inline-flex; align-items: center; justify-content: center;
+    gap: 6px;
+    transition: background 0.12s, transform 0.05s, opacity 0.12s;
   }
-  .btn:hover { background: #111827; }
-  .btn:active { transform: translateY(1px); }
-  .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-  .btn:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-  .btn-outline { background: transparent; color: var(--ink); }
-  .btn-outline:hover { background: var(--paper-tint); }
-  .btn-danger { background: var(--bad); border-color: var(--bad); color: #fff; }
-  .btn-danger:hover { background: #b91c1c; }
-  .btn-text {
-    background: transparent; color: var(--muted-strong); border-color: transparent;
-    text-transform: none; letter-spacing: 0; font-weight: 600;
-    padding: 8px 12px;
+  .btn:active { transform: scale(0.98); }
+  .btn:focus-visible { outline: 2px solid var(--spm-blue); outline-offset: 2px; }
+  .btn-primary { background: var(--spm-blue); color: #fff; }
+  .btn-primary:hover:not(:disabled) { background: #0046cc; }
+  .btn-primary:disabled { background: #93c5fd; cursor: not-allowed; }
+  .btn-outline {
+    background: #fff; border: 1.5px solid var(--border-strong); color: var(--text);
   }
-  .btn-text:hover { background: var(--border); color: var(--bad); }
-  .btn-sm { min-height: 36px; padding: 6px 12px; font-size: 0.82rem; }
-  .btn-block { width: 100%; }
+  .btn-outline:hover { background: #f9fafb; }
+  .btn-danger { background: var(--bad); color: #fff; }
+  .btn-danger:hover { opacity: 0.92; }
+  .btn-sm { padding: 7px 12px; font-size: 0.82rem; min-height: 36px; }
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
 
-  .btn-row { display: flex; gap: 8px; align-items: center; margin-top: 14px; flex-wrap: wrap; }
-  .btn-row .spacer { flex: 1; }
-
-  /* ── Identity banner ───────────────────────────────────────────────── */
-  .identity {
-    display: flex; align-items: center; gap: 12px;
-    background: var(--paper); border: 1px dashed var(--ink);
-    padding: 12px 14px; margin-bottom: 14px; border-radius: var(--radius-sm);
-  }
-  .identity .who { flex: 1; min-width: 0; }
-  .identity .who-name {
-    font-family: Georgia, serif; font-weight: 800;
-    font-size: 1.05rem; color: var(--ink);
-    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  }
-  .identity .who-apa {
-    color: var(--muted-strong);
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 0.78rem;
-  }
-
-  /* ── Assignment cards ──────────────────────────────────────────────── */
-  .assignment-header {
-    background: var(--paper);
-    border-left: 4px solid var(--ink);
+  /* ── Assignment card ─────────────────────────────────────────────── */
+  .assign-card { padding: 0; overflow: hidden; }
+  .assign-head {
     padding: 14px 16px;
-    margin: -18px -18px 14px;
-    border-radius: 0;
     border-bottom: 1px solid var(--border);
+    background: linear-gradient(135deg, #fafbfc 0%, #ffffff 100%);
   }
-  .assignment-header .event-name {
-    font-weight: 800; font-family: Georgia, serif;
-    font-size: 1.1rem; color: var(--ink);
+  .assign-head .event-name {
+    font-size: 1.05rem; font-weight: 800; color: var(--text);
     line-height: 1.25;
   }
-  .assignment-header .team-name {
-    font-size: 0.86rem; color: var(--muted-strong); margin-top: 4px;
+  .assign-head .team-name {
+    font-size: 0.84rem; color: var(--text-dim); margin-top: 4px;
   }
-  .assignment-header .event-desc {
-    font-size: 0.84rem; color: var(--muted-strong); margin-top: 6px;
+  .assign-head .event-desc {
+    font-size: 0.84rem; color: var(--text-dim); margin-top: 6px;
     line-height: 1.45;
   }
-  .meta-row {
-    display: flex; align-items: center; gap: 8px;
-    margin-top: 10px; flex-wrap: wrap;
+  .chip-row {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-top: 10px;
   }
   .chip {
     display: inline-flex; align-items: center; gap: 4px;
-    padding: 3px 9px; border-radius: 999px; font-size: 0.74rem;
-    font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    padding: 3px 9px; border-radius: var(--pill);
+    font-size: 0.72rem; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.04em;
+    white-space: nowrap;
   }
-  .chip-progress {
-    background: var(--card); color: var(--ink);
-    border: 1px solid var(--border-strong);
-  }
-  .chip-progress.complete { background: var(--ok-bg); color: var(--ok); border-color: var(--ok); }
-  .chip-due { background: var(--warn-bg); color: var(--warn); }
-  .chip-due.urgent { background: #fee2e2; color: var(--urgent); }
+  .chip-role     { background: #eff6ff; color: var(--spm-blue); border: 1px solid #bfdbfe; }
+  .chip-progress { background: #f9fafb; color: var(--text); border: 1px solid var(--border-strong); }
+  .chip-progress.complete { background: #f0fdf4; color: var(--ok); border-color: #86efac; }
+  .chip-due { background: #fef9c3; color: #854d0e; }
+  .chip-due.urgent  { background: #fee2e2; color: var(--urgent); }
   .chip-due.overdue { background: var(--bad); color: #fff; }
-  .chip-due.complete { background: var(--ok-bg); color: var(--ok); }
-  .chip-role {
-    background: var(--paper); color: var(--ink);
-    border: 1px dashed var(--ink);
-  }
+  .chip-due.complete { background: #f0fdf4; color: var(--ok); }
 
-  /* ── Item row ──────────────────────────────────────────────────────── */
+  .item-list { padding: 8px 8px 12px; }
+
+  /* ── Item row ───────────────────────────────────────────────────── */
   .item-row {
-    background: #fff; border: 1px solid var(--border);
-    padding: 12px 14px; margin-bottom: 8px; border-radius: var(--radius-sm);
+    background: var(--bg-card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 12px;
     display: flex; align-items: center; gap: 12px;
     cursor: pointer; touch-action: manipulation;
     min-height: var(--tap);
-    transition: background 0.12s, border-color 0.12s;
-    text-align: left; width: 100%; font: inherit; color: inherit;
+    width: 100%; font: inherit; color: inherit; text-align: left;
+    border-left-width: 4px;
+    margin: 6px 0;
+    transition: background 0.12s;
   }
-  .item-row:hover { background: var(--paper); }
-  .item-row:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-  .item-row.pending  { border-left: 4px solid var(--bad); }
-  .item-row.uploaded { border-left: 4px solid var(--warn); }
-  .item-row.approved { border-left: 4px solid var(--ok); background: var(--ok-bg); }
+  .item-row:hover { background: #f9fafb; }
+  .item-row:focus-visible { outline: 2px solid var(--spm-blue); outline-offset: 2px; }
+  .item-row.pending  { border-left-color: var(--bad); }
+  .item-row.uploaded { border-left-color: var(--warn); }
+  .item-row.approved { border-left-color: var(--ok); background: #f0fdf4; }
 
-  .item-status {
-    font-family: ui-monospace, "SF Mono", Menlo, monospace;
-    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em;
-    padding: 4px 8px; border-radius: 3px; text-transform: uppercase;
-    text-align: center; white-space: nowrap;
-    flex-shrink: 0;
+  .item-row .item-status {
+    font-size: 1.4rem; line-height: 1; flex-shrink: 0;
+    width: 28px; text-align: center;
   }
-  .item-status.pending  { background: var(--bad-bg); color: var(--bad); }
-  .item-status.uploaded { background: var(--warn-bg); color: var(--warn); }
-  .item-status.approved {
-    background: var(--paper); color: var(--stamp);
-    border: 2px solid var(--stamp);
-    font-weight: 900;
-  }
+  .item-row.pending  .item-status { color: var(--bad); }
+  .item-row.uploaded .item-status { color: var(--warn); }
+  .item-row.approved .item-status { color: var(--ok); }
+
   .item-body { flex: 1; min-width: 0; }
-  .item-title { font-weight: 700; color: var(--ink); line-height: 1.3; }
-  .item-desc  { font-size: 0.8rem; color: var(--muted-strong); margin-top: 2px; line-height: 1.35; }
-  .item-row .chev {
-    color: var(--muted); font-size: 1.3rem; line-height: 1;
-    flex-shrink: 0;
+  .item-title { font-size: 0.96rem; font-weight: 700; line-height: 1.3; color: var(--text); }
+  .item-state {
+    font-size: 0.74rem; font-weight: 700; color: var(--text-dim);
+    text-transform: uppercase; letter-spacing: 0.06em; margin-top: 2px;
   }
-  .item-blank { display: block; margin-top: 4px; font-size: 0.8rem; }
-  .item-blank .blank-link {
-    color: var(--ink); text-decoration: underline;
-    font-weight: 600;
+  .item-row.pending  .item-state { color: var(--bad); }
+  .item-row.uploaded .item-state { color: var(--warn); }
+  .item-row.approved .item-state { color: var(--ok); }
+  .item-desc { font-size: 0.8rem; color: var(--text-dim); margin-top: 3px; line-height: 1.4; }
+  .item-download {
+    margin-top: 6px; display: inline-flex; align-items: center; gap: 6px;
+    padding: 5px 10px; background: #eff6ff; color: var(--spm-blue);
+    border-radius: var(--pill); font-size: 0.78rem; font-weight: 700;
+    text-decoration: none; cursor: pointer;
   }
-  .item-blank .blank-link:hover { color: var(--primary); }
+  .item-download:hover { background: #dbeafe; }
+  .item-row .chev { color: var(--text-dim); font-size: 1.3rem; line-height: 1; flex-shrink: 0; }
 
-  /* ── Empty state ───────────────────────────────────────────────────── */
+  /* ── Empty state ────────────────────────────────────────────────── */
   .empty {
     text-align: center; padding: 28px 16px;
   }
-  .empty .empty-icon {
-    font-size: 2.4rem; margin-bottom: 12px;
-    color: var(--muted);
-  }
-  .empty .empty-title {
-    font-family: Georgia, serif; font-weight: 800;
-    font-size: 1.1rem; color: var(--ink); margin-bottom: 6px;
-  }
-  .empty .empty-body {
-    color: var(--muted-strong); font-size: 0.9rem;
-    max-width: 380px; margin: 0 auto;
-  }
-  .empty a { color: var(--ink); }
+  .empty .empty-icon { font-size: 2.4rem; margin-bottom: 12px; color: var(--text-dim); }
+  .empty .empty-title { font-size: 1.05rem; font-weight: 800; margin-bottom: 6px; }
+  .empty .empty-body  { color: var(--text-dim); font-size: 0.9rem; max-width: 380px; margin: 0 auto; }
+  .empty a { color: var(--spm-blue); font-weight: 700; }
 
-  /* ── Loading skeletons ─────────────────────────────────────────────── */
+  /* ── Loading skeletons ──────────────────────────────────────────── */
   .skel {
-    background: linear-gradient(90deg,
-      var(--border) 0%, #f3f4f6 50%, var(--border) 100%);
+    background: linear-gradient(90deg, var(--border) 0%, #f3f4f6 50%, var(--border) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.4s linear infinite;
-    border-radius: var(--radius-sm);
-    display: block;
+    border-radius: 8px; display: block;
   }
   @keyframes shimmer {
     0%   { background-position: 200% 0; }
@@ -313,131 +242,157 @@
   }
   .skel-line { height: 12px; margin-bottom: 8px; }
   .skel-line.lg { height: 18px; width: 60%; }
-  .skel-row {
-    height: 56px; margin-bottom: 8px; border-radius: var(--radius-sm);
-  }
+  .skel-row { height: 56px; margin-bottom: 8px; border-radius: 10px; }
 
-  /* ── Modal ─────────────────────────────────────────────────────────── */
-  .modal-bg {
-    position: fixed; inset: 0; background: rgba(0,0,0,0.55);
-    display: none; align-items: center; justify-content: center;
-    z-index: 100; padding: 16px;
+  /* ── Modal (PaperTrail pattern) ─────────────────────────────────── */
+  .modal-backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: none; z-index: 100;
+    align-items: center; justify-content: center; padding: 16px;
     padding-bottom: max(16px, env(safe-area-inset-bottom));
   }
-  .modal-bg.open { display: flex; }
+  .modal-backdrop.open { display: flex; }
   .modal {
-    background: var(--card); border-radius: var(--radius-md);
-    max-width: 480px; width: 100%;
-    max-height: 92vh; overflow-y: auto;
-    padding: 18px; box-shadow: var(--shadow-lg);
+    background: #fff; border-radius: var(--radius);
+    max-width: 480px; width: 100%; max-height: 92vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.3);
+    padding: 18px 18px 16px;
   }
-  .modal h3 {
-    margin-bottom: 4px; font-family: Georgia, serif;
-    font-size: 1.15rem; color: var(--ink);
-  }
-  .modal .sub {
-    color: var(--muted-strong); font-size: 0.84rem;
-    margin-bottom: 14px;
-  }
-  /* Bottom sheet on small screens */
+  .modal h3 { margin: 0 0 4px; font-size: 1.1rem; font-weight: 800; }
+  .modal .sub { color: var(--text-dim); font-size: 0.86rem; margin: 0 0 14px; }
+
   @media (max-width: 480px) {
-    .modal-bg { align-items: flex-end; padding: 0; }
+    .modal-backdrop { align-items: flex-end; padding: 0; }
     .modal {
       max-width: 100%; max-height: 92dvh;
-      border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+      border-radius: var(--radius) var(--radius) 0 0;
       padding-bottom: max(18px, env(safe-area-inset-bottom));
     }
   }
 
-  /* Source picker */
+  .step-pill {
+    display: inline-block; padding: 3px 10px; border-radius: var(--pill);
+    background: #eff6ff; color: var(--spm-blue);
+    font-size: 0.74rem; font-weight: 800;
+    margin-bottom: 8px; letter-spacing: 0.04em; text-transform: uppercase;
+  }
+
+  .download-banner {
+    display: flex; align-items: center; gap: 10px;
+    background: #eff6ff; border-left: 4px solid var(--spm-blue);
+    border-radius: 10px; padding: 10px 12px; margin-bottom: 14px;
+    text-decoration: none; color: var(--text);
+  }
+  .download-banner:hover { background: #dbeafe; }
+  .download-banner .db-icon {
+    font-size: 1.5rem; line-height: 1; flex-shrink: 0; color: var(--spm-blue);
+  }
+  .download-banner .db-body { flex: 1; min-width: 0; }
+  .download-banner .db-title {
+    font-size: 0.9rem; font-weight: 800; color: var(--spm-blue);
+  }
+  .download-banner .db-sub {
+    font-size: 0.78rem; color: var(--text-dim); margin-top: 1px;
+  }
+  .download-banner .db-arrow { color: var(--spm-blue); font-size: 1.2rem; }
+
+  /* ── Source picker (PaperTrail two-button pattern) ──────────────── */
   .source-picker {
-    display: grid; gap: 10px; margin-bottom: 12px;
+    display: grid; gap: 10px;
     grid-template-columns: 1fr 1fr;
   }
   .source-picker.single { grid-template-columns: 1fr; }
   .source-btn {
-    background: var(--paper); border: 2px dashed var(--ink);
-    padding: 18px 12px; text-align: center; cursor: pointer;
-    border-radius: var(--radius-sm); font: inherit;
-    color: var(--ink); display: block; touch-action: manipulation;
-    min-height: 84px;
+    border: 2px dashed var(--border-strong); border-radius: 12px;
+    padding: 22px 10px; text-align: center;
+    background: #fafbfc; cursor: pointer; color: var(--text-dim);
+    font-family: inherit; font-weight: 700;
+    transition: border-color 0.16s, background-color 0.16s, color 0.16s, transform 0.04s;
+    min-height: 96px;
+    display: block;
   }
-  .source-btn:hover { background: var(--paper-tint); }
-  .source-btn:focus-within { outline: 2px solid var(--primary); outline-offset: 2px; }
-  .source-btn .icon { font-size: 1.7rem; line-height: 1; }
-  .source-btn .label { font-weight: 700; margin-top: 6px; font-size: 0.9rem; }
-  .source-btn input[type="file"] {
-    position: absolute; opacity: 0; pointer-events: none;
-    width: 1px; height: 1px;
-  }
+  .source-btn:hover { border-color: var(--spm-blue); background: #eff6ff; color: var(--text); }
+  .source-btn:active { transform: scale(0.99); }
+  .source-btn .source-icon { font-size: 1.9rem; line-height: 1; margin-bottom: 4px; }
+  .source-btn .source-label { font-size: 0.92rem; font-weight: 800; color: var(--text); }
+  .source-btn .source-sub { font-size: 0.72rem; font-weight: 500; color: var(--text-dim); margin-top: 2px; }
+  .source-picker input[type=file] { display: none; }
 
   .preview-img {
     width: 100%; max-height: 50vh; object-fit: contain;
-    background: var(--ink); border-radius: var(--radius-sm);
-    margin-bottom: 10px; display: block;
+    border-radius: 10px; background: #000;
+    margin-top: 10px; display: block;
   }
   .img-wrap { position: relative; }
   .stamp-overlay {
     position: absolute; top: 24%; left: 50%;
     transform: translate(-50%, -50%) rotate(-12deg);
-    border: 4px double var(--stamp); color: var(--stamp);
-    padding: 8px 16px; font-family: Georgia, serif;
-    font-size: 1.4rem; font-weight: 900; letter-spacing: 0.12em;
-    background: rgba(255, 253, 247, 0.92);
-    pointer-events: none;
+    border: 4px double var(--bad); color: var(--bad);
+    padding: 8px 16px; font-weight: 900;
+    font-size: 1.3rem; letter-spacing: 0.12em;
+    background: rgba(255,255,255,0.94);
+    pointer-events: none; border-radius: 6px;
   }
 
-  .meta-line { font-size: 0.82rem; color: var(--muted-strong); margin-bottom: 10px; line-height: 1.45; }
+  .meta-line { font-size: 0.82rem; color: var(--text-dim); margin: 10px 0; line-height: 1.5; }
 
-  /* ── Status line / spinner ─────────────────────────────────────────── */
-  .status-line {
-    font-size: 0.86rem; margin-top: 8px;
-    min-height: 1.3em; line-height: 1.4;
+  /* ── Status / toast / spinner ───────────────────────────────────── */
+  .status {
+    font-size: 0.86rem; padding: 8px 12px; border-radius: 8px;
+    margin-top: 10px; line-height: 1.4;
   }
-  .status-line.ok { color: var(--ok); }
-  .status-line.err { color: var(--bad); }
-  .status-line.progress { color: var(--muted-strong); }
+  .status:empty { display: none; }
+  .status.progress { background: #eff6ff; color: var(--spm-blue); }
+  .status.error    { background: #fef2f2; color: var(--bad); }
+  .status.ok       { background: #f0fdf4; color: var(--ok); }
   .spinner {
-    display: inline-block; width: 12px; height: 12px;
-    border: 2px solid var(--border); border-top-color: var(--ink);
-    border-radius: 50%; animation: spin 0.8s linear infinite;
-    vertical-align: middle; margin-right: 6px;
+    display: inline-block; width: 14px; height: 14px;
+    border: 2px solid currentColor; border-right-color: transparent;
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    vertical-align: -2px; margin-right: 6px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* ── Update banner ─────────────────────────────────────────────────── */
-  .update-banner {
-    position: fixed; left: 0; right: 0;
-    bottom: 0; bottom: env(safe-area-inset-bottom);
-    background: var(--ink); color: var(--paper);
-    padding: 12px 16px; z-index: 200;
-    display: flex; align-items: center; gap: 12px;
-    box-shadow: 0 -2px 12px rgba(0,0,0,0.3);
-    font-size: 0.9rem; font-weight: 600;
+  .toast {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    background: #111827; color: #fff; padding: 11px 18px;
+    border-radius: var(--pill); font-size: 0.88rem; font-weight: 700;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.25); z-index: 250;
+    opacity: 0; pointer-events: none; transition: opacity 0.18s;
   }
-  .update-banner .grow { flex: 1; }
-  .update-banner .btn {
-    background: var(--paper); color: var(--ink); border-color: var(--paper);
-    min-height: 36px; padding: 4px 14px; font-size: 0.82rem;
-  }
+  .toast.show { opacity: 1; }
 
-  /* ── Footer ────────────────────────────────────────────────────────── */
+  /* ── Auto-update overlay (modal-style, matches PaperTrail) ──────── */
+  .update-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    display: none; z-index: 300;
+    align-items: center; justify-content: center; padding: 16px;
+  }
+  .update-overlay.open { display: flex; }
+  .uo-card {
+    background: #fff; padding: 22px 26px; border-radius: var(--radius);
+    text-align: center; max-width: 360px;
+  }
+  .uo-card h2 { margin: 0 0 8px; font-size: 1.05rem; font-weight: 800; }
+
+  /* ── Footer ────────────────────────────────────────────────────── */
   footer {
-    text-align: center; color: var(--muted);
-    font-size: 0.74rem; padding: 18px 12px 8px;
+    max-width: 720px; margin: 0 auto;
+    text-align: center; color: var(--text-dim);
+    font-size: 0.74rem; padding: 18px 16px 8px;
   }
-  footer .footer-version { margin-bottom: 4px; }
-  footer .footer-contact a { color: var(--muted-strong); text-decoration: underline; }
-  footer .footer-contact a:hover { color: var(--ink); }
+  footer a { color: var(--text-dim); text-decoration: underline; }
+  footer a:hover { color: var(--text); }
 
-  /* ── Visually hidden (a11y) ────────────────────────────────────────── */
+  /* ── Visually hidden ────────────────────────────────────────────── */
   .sr-only {
     position: absolute; width: 1px; height: 1px;
     padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0);
     white-space: nowrap; border: 0;
   }
 
-  /* ── Reduced motion ────────────────────────────────────────────────── */
+  /* ── Reduced motion ────────────────────────────────────────────── */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.001ms !important;
@@ -450,89 +405,93 @@
 </head>
 <body>
 
-<div class="page">
+<header class="header">
+  <div class="header-inner">
+    <h1><span class="brand-dot"></span>RedTape</h1>
+    <div class="who" id="whoBlock"></div>
+  </div>
+</header>
 
-  <header class="letterhead" aria-labelledby="appTitle">
-    <div class="letterhead-top">
-      <div class="eyebrow">SPM APA &middot; Office of Records</div>
-      <div class="form-no" id="formNo">FORM RT-001</div>
+<main>
+  <!-- Identity sign-in card (rendered when no _identity) -->
+  <div id="loginCard" class="card id-card" style="display:none">
+    <h2>Sign in</h2>
+    <p>
+      RedTape is South Portland Metro APA&rsquo;s paperwork desk. Captains and
+      co-captains sign in to submit team forms and download blank templates.
+    </p>
+    <div class="id-input-row">
+      <input type="text" id="apaInput" class="id-input"
+             inputmode="numeric" autocomplete="off" pattern="[0-9 \-]*"
+             placeholder="Your APA #" aria-describedby="apaHelp">
+      <button type="button" class="btn btn-primary" id="loginBtn">Sign in</button>
     </div>
-    <h1 id="appTitle"><span class="red">Red</span>Tape</h1>
-    <p class="sub">Official Paperwork Submission Portal</p>
-  </header>
+    <div id="loginStatus" class="status" role="status" aria-live="polite"></div>
+    <p id="apaHelp" class="id-help">
+      5-digit (e.g. <code>25294</code>) or 8-digit (e.g. <code>97225294</code>).
+      Find it on your APA scoresheet or membership card.
+    </p>
+  </div>
 
-  <main>
-    <!-- Identity gate -->
-    <section id="loginCard" class="card" aria-labelledby="loginHeading">
-      <h2 id="loginHeading">Sign in</h2>
-      <p class="intro">
-        RedTape is South Portland Metro APA's paperwork desk. Sign in with your
-        APA number to view your team's required forms and submit photos.
-      </p>
-      <div class="field">
-        <label for="apaInput">APA member number</label>
-        <input type="text" id="apaInput" inputmode="numeric" autocomplete="off"
-               pattern="[0-9 \-]*" placeholder="Your APA #"
-               aria-describedby="apaHelp">
-        <p class="help" id="apaHelp">
-          5-digit (e.g. 25294) or 8-digit (e.g. 97225294) format.
-          Find it on your APA scoresheet or membership card.
-        </p>
-      </div>
-      <button type="button" class="btn btn-block" id="loginBtn">Sign in</button>
-      <div id="loginStatus" class="status-line" role="status" aria-live="polite"></div>
-    </section>
+  <!-- Logged-in dashboard -->
+  <div id="dashboard" style="display:none">
+    <div id="assignmentsContainer" aria-live="polite" aria-busy="false">
+      <!-- Skeleton placeholders rendered by JS while loading -->
+    </div>
+  </div>
+</main>
 
-    <!-- Logged-in dashboard -->
-    <section id="dashboard" hidden aria-labelledby="dashHeading">
-      <h2 id="dashHeading" class="sr-only">Your paperwork</h2>
-      <div class="identity" id="identityBanner">
-        <div class="who">
-          <div class="who-name" id="meName"></div>
-          <div class="who-apa" id="meApa"></div>
-        </div>
-        <button type="button" class="btn btn-text btn-sm" id="signOutBtn">Sign out</button>
-      </div>
-
-      <div id="assignmentsContainer" aria-live="polite" aria-busy="false">
-        <!-- Skeleton placeholders rendered by JS while loading -->
-      </div>
-    </section>
-  </main>
+<!-- Item modal -->
+<div class="modal-backdrop" id="modalBg" role="dialog" aria-modal="true"
+     aria-labelledby="modalHeading">
+  <div class="modal" id="modalBox" tabindex="-1"><!-- rendered by JS --></div>
 </div>
 
-<!-- Upload modal -->
-<div id="modalBg" class="modal-bg" role="dialog" aria-modal="true"
-     aria-labelledby="modalHeading" aria-hidden="true">
-  <div class="modal" id="modalBox" tabindex="-1"></div>
+<!-- Auto-update overlay -->
+<div class="update-overlay" id="updateOverlay">
+  <div class="uo-card">
+    <h2>New version available</h2>
+    <p style="margin:0 0 14px;color:var(--text-dim);font-size:0.88rem">
+      RedTape <span id="uoVersion"></span> is ready.
+    </p>
+    <button type="button" class="btn btn-primary" onclick="forceReload()">Reload</button>
+  </div>
 </div>
 
-<!-- Auto-update banner -->
-<div id="updateBanner" class="update-banner" hidden role="status" aria-live="polite"></div>
+<!-- Toast -->
+<div class="toast" id="toast"></div>
 
 <footer>
-  <div class="footer-version" id="appFooter"></div>
-  <div class="footer-contact">
-    Questions? <a href="mailto:southportlandmetroapa@gmail.com">southportlandmetroapa@gmail.com</a>
-  </div>
+  <div id="appFooter"></div>
+  <div>Questions? <a href="mailto:southportlandmetroapa@gmail.com">southportlandmetroapa@gmail.com</a></div>
 </footer>
 
 <script>
 /* ══════════════════════════════════════════════════════════════════════
-   RedTape v0.2 — captain-facing paperwork portal.
+   RedTape v0.4 — captain-facing paperwork portal.
 
-   Flow:  APA-number login → captain_load RPC returns assignments tree →
-   per-item card lists status (NOT FILED / AWAITING REVIEW / STAMPED).
-   Tapping an item opens a modal that handles upload (R2 PUT + DB record
-   via captain_record_upload), view, replace, or delete.
+   FLOW:
+     1. Captain signs in with APA#  →  saved to localStorage forever.
+     2. captain_load returns every event where they're listed as Captain
+        or Co-Captain (multi-team supported).
+     3. Each assignment renders as a card with team info, role chip,
+        progress, due date, and a list of required items.
+     4. Tap an item → modal. Pending items show camera/library upload;
+        already-filed items show preview + delete/replace. Any item with
+        a blank form template shows a "Download form" banner.
 
-   Auto-updates: polls apa_core.apps.RedTape every 30s + on visibility
-   change; offers a reload banner when a new version ships. Reload uses
-   location.replace with a cache-bust param to escape GitHub Pages'
-   Fastly CDN cache (see Slate 3.54).
+   AUTH MODEL:
+     captain_load filters by (captain_apa = me OR co_captain_apa = me).
+     captain_record_upload + captain_delete_upload re-verify the same
+     before writing. Anon JWT is fine — the gate is in the RPCs.
+
+   AUTO-UPDATE:
+     Polls apa_core.apps.RedTape every 30s and on visibility change.
+     Reload uses location.replace + cache-bust to escape Fastly CDN
+     (see Slate 3.54 for the bug this fixes).
    ══════════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.3';
+const APP_VERSION = '0.4';
 const APP_NAME = 'RedTape';
 const SB_URL = 'https://dqzbekoaysgaiqljueac.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxemJla29heXNnYWlxbGp1ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzA5NzgsImV4cCI6MjA5MDc0Njk3OH0.cCdGxZ4zEFzU_r6lWSDeoNWG67Q4MSYCAtpds035dfU';
@@ -555,17 +514,14 @@ function $(id) { return document.getElementById(id); }
 function setStatus(el, msg, cls) {
   if (typeof el === 'string') el = $(el);
   if (!el) return;
-  el.className = 'status-line' + (cls ? ' ' + cls : '');
-  el.innerHTML = msg;
+  el.className = 'status' + (cls ? ' ' + cls : '');
+  el.innerHTML = msg || '';
 }
 
-/* Touch device detection — drives the upload source picker (no camera
-   button on desktop where capture="environment" is a no-op). */
 const IS_TOUCH = typeof matchMedia === 'function'
   && matchMedia('(pointer: coarse)').matches;
 
-/* Normalize APA input: strip ALL non-digits so paste of "972-25294" works.
-   Accept 5-digit (local) or 8-digit (full) form; convert 5 → 8 (prefix 972). */
+/* Strip all non-digits, then accept 5-digit (local) or 8-digit (full); 5→8 */
 function normalizeApa(raw) {
   const digits = String(raw || '').replace(/\D/g, '');
   if (/^\d{8}$/.test(digits)) return digits;
@@ -573,27 +529,21 @@ function normalizeApa(raw) {
   return null;
 }
 
-/* Smart due-date formatter. Returns { text, cls } or null. */
+/* Smart due-date formatter — color escalation matches PaperTrail's bands. */
 function fmtDueDate(iso) {
   if (!iso) return null;
-  // Treat the date as end-of-day in the user's locale so "due today" works.
   const due = new Date(iso + 'T23:59:59');
   if (isNaN(due.getTime())) return null;
   const now = new Date();
-  const dayMs = 86400000;
-  const days = Math.floor((due - now) / dayMs);
+  const days = Math.floor((due - now) / 86400000);
   const fmt = due.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-  if (days < 0) {
-    const n = -days;
-    return { text: 'Overdue ' + n + ' day' + (n === 1 ? '' : 's'), cls: 'overdue' };
-  }
-  if (days === 0) return { text: 'Due today', cls: 'urgent' };
+  if (days < 0)  { const n = -days; return { text: 'Overdue ' + n + ' day' + (n === 1 ? '' : 's'), cls: 'overdue' }; }
+  if (days === 0) return { text: 'Due today',    cls: 'urgent' };
   if (days === 1) return { text: 'Due tomorrow', cls: 'urgent' };
-  if (days <= 7) return { text: 'Due ' + fmt + ' · ' + days + ' days', cls: 'urgent' };
+  if (days <= 7)  return { text: 'Due ' + fmt + ' · ' + days + ' days', cls: 'urgent' };
   return { text: 'Due ' + fmt, cls: '' };
 }
 
-/* Format a timestamp for "Uploaded …" / "Stamped …" rows. */
 function fmtTimestamp(iso) {
   if (!iso) return '';
   const d = new Date(iso);
@@ -604,7 +554,15 @@ function fmtTimestamp(iso) {
   });
 }
 
-/* ── Identity persistence ───────────────────────────────────────────── */
+function toast(msg, ms) {
+  const el = $('toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toast._t);
+  toast._t = setTimeout(() => el.classList.remove('show'), ms || 2200);
+}
+
+/* ── Identity persistence (forever, matches PaperTrail) ─────────────── */
 const IDENT_KEY = 'redtape.identity.v1';
 let _identity = null;
 let _data = null;
@@ -624,12 +582,11 @@ async function doLogin() {
   const raw = $('apaInput').value;
   const apa = normalizeApa(raw);
   if (!apa) {
-    setStatus('loginStatus', 'Enter a 5- or 8-digit APA number.', 'err');
+    setStatus('loginStatus', 'Enter a 5- or 8-digit APA number.', 'error');
     return;
   }
-  setStatus('loginStatus', '<span class="spinner" aria-hidden="true"></span>Looking up&hellip;', 'progress');
+  setStatus('loginStatus', '<span class="spinner"></span>Looking up&hellip;', 'progress');
   try {
-    // Slate's papertrail_lookup_player RPC accepts either form, returns name + email.
     const r = await fetch(SB_URL + '/rest/v1/rpc/papertrail_lookup_player', {
       method: 'POST',
       headers: { ...HEADERS_READ, 'Accept-Profile': 'slate', 'Content-Profile': 'slate',
@@ -640,8 +597,7 @@ async function doLogin() {
     const rows = await r.json();
     if (!rows.length) {
       setStatus('loginStatus',
-        'No member found with that number. Double-check your scoresheet or ask your captain.',
-        'err');
+        'No member found with that number. Double-check your scoresheet or ask your captain.', 'error');
       return;
     }
     const p = rows[0];
@@ -649,28 +605,35 @@ async function doLogin() {
     setStatus('loginStatus', '', '');
     enterDashboard();
   } catch (e) {
-    setStatus('loginStatus', 'Failed: ' + e.message, 'err');
+    setStatus('loginStatus', 'Failed: ' + e.message, 'error');
   }
 }
 
 function enterDashboard() {
-  $('loginCard').hidden = true;
-  $('dashboard').hidden = false;
-  $('meName').textContent = _identity.name || 'Captain';
-  $('meApa').textContent  = '#' + _identity.apa_number;
+  $('loginCard').style.display = 'none';
+  $('dashboard').style.display = '';
+  renderWho();
   loadAssignments();
+}
+
+function renderWho() {
+  if (!_identity) { $('whoBlock').innerHTML = ''; return; }
+  $('whoBlock').innerHTML =
+    '<div class="who-row"><span><strong>' + esc(_identity.name || 'Captain') + '</strong> &middot; #' + esc(_identity.apa_number) + '</span>'
+    + '<button type="button" onclick="signOut()">Sign out</button></div>';
 }
 
 function signOut() {
   if (!confirm('Sign out of RedTape on this device?')) return;
   clearIdentity();
-  $('dashboard').hidden = true;
-  $('loginCard').hidden = false;
+  $('dashboard').style.display = 'none';
+  $('loginCard').style.display = '';
+  $('whoBlock').innerHTML = '';
   $('apaInput').value = '';
   $('apaInput').focus();
 }
 
-/* ── Skeleton loaders ───────────────────────────────────────────────── */
+/* ── Loading skeletons ──────────────────────────────────────────────── */
 function skeletonHtml(n) {
   let h = '';
   for (let i = 0; i < n; i++) {
@@ -716,9 +679,8 @@ function statusOf(upload) {
   if (upload.approved_at) return 'approved';
   return 'uploaded';
 }
-function statusLabel(s) {
-  return s === 'pending' ? 'NOT FILED' : (s === 'approved' ? 'STAMPED' : 'AWAITING REVIEW');
-}
+function statusGlyph(s) { return s === 'pending' ? '✕' : (s === 'approved' ? '✓' : '⏳'); }
+function statusLabel(s) { return s === 'pending' ? 'Not filed' : (s === 'approved' ? 'Stamped' : 'Awaiting review'); }
 
 function progressOf(items) {
   const total = items.length;
@@ -744,39 +706,8 @@ function renderAssignments() {
       + '</div></div>';
     return;
   }
-
-  wrap.innerHTML = list.map(a => {
-    const prog = progressOf(a.items);
-    const due  = fmtDueDate(a.due_date);
-    const allStamped = prog.stamped === prog.total && prog.total > 0;
-    const progChip = '<span class="chip chip-progress'
-      + (allStamped ? ' complete' : '') + '">'
-      + (allStamped ? 'All stamped &middot; ' : '')
-      + prog.filed + ' of ' + prog.total + ' filed</span>';
-    const dueChip = due
-      ? '<span class="chip chip-due ' + due.cls + (allStamped ? ' complete' : '') + '">'
-        + (allStamped ? '✓ ' : '') + esc(due.text) + '</span>'
-      : '';
-    const roleChip = a.role
-      ? '<span class="chip chip-role">' + esc(a.role) + '</span>'
-      : '';
-
-    return '<div class="card">'
-      + '  <div class="assignment-header">'
-      + '    <div class="event-name">' + esc(a.event_name) + '</div>'
-      + '    <div class="team-name">' + esc(a.team_number) + ' &middot; ' + esc(a.team_name) + '</div>'
-      + (a.event_description ? '<div class="event-desc">' + esc(a.event_description) + '</div>' : '')
-      + '    <div class="meta-row">' + roleChip + progChip + dueChip + '</div>'
-      + '  </div>'
-      + '  <h2>Required forms <span class="meta">'
-      +     a.items.length + ' item' + (a.items.length === 1 ? '' : 's') + '</span></h2>'
-      + '  <div>'
-      +     a.items.map(it => itemRowHtml(a.assignment_id, it)).join('')
-      + '  </div>'
-      + '</div>';
-  }).join('');
-
-  // Wire clicks
+  wrap.innerHTML = list.map(a => assignmentCardHtml(a)).join('');
+  // Wire item clicks
   wrap.querySelectorAll('.item-row').forEach(row => {
     row.onclick = () => openItemModal(
       parseInt(row.dataset.assignmentId, 10),
@@ -788,21 +719,48 @@ function renderAssignments() {
   });
 }
 
+function assignmentCardHtml(a) {
+  const prog = progressOf(a.items);
+  const due  = fmtDueDate(a.due_date);
+  const allStamped = prog.stamped === prog.total && prog.total > 0;
+  const roleChip = a.role
+    ? '<span class="chip chip-role">' + esc(a.role) + '</span>' : '';
+  const progChip = '<span class="chip chip-progress' + (allStamped ? ' complete' : '') + '">'
+    + (allStamped ? '✓ All stamped · ' : '')
+    + prog.filed + ' of ' + prog.total + ' filed</span>';
+  const dueChip = due
+    ? '<span class="chip chip-due ' + due.cls + (allStamped ? ' complete' : '') + '">'
+      + (allStamped ? '✓ ' : '') + esc(due.text) + '</span>'
+    : '';
+
+  return '<div class="card assign-card">'
+    + '  <div class="assign-head">'
+    + '    <div class="event-name">' + esc(a.event_name) + '</div>'
+    + '    <div class="team-name">' + esc(a.team_number) + ' &middot; ' + esc(a.team_name) + '</div>'
+    + (a.event_description ? '<div class="event-desc">' + esc(a.event_description) + '</div>' : '')
+    + '    <div class="chip-row">' + roleChip + progChip + dueChip + '</div>'
+    + '  </div>'
+    + '  <div class="item-list">'
+    +     a.items.map(it => itemRowHtml(a.assignment_id, it)).join('')
+    + '  </div>'
+    + '</div>';
+}
+
 function itemRowHtml(assignmentId, it) {
   const st = statusOf(it.upload);
-  // Blank form is admin-uploaded — captain sees a small "View blank form"
-  // link they can tap to open + print before filling out.
-  const blankLink = it.blank_form_r2_path
-    ? '<a class="blank-link" href="' + esc(R2_URL + '/' + it.blank_form_r2_path) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">View blank form</a>'
-    : '';
   return '<button type="button" class="item-row ' + st + '" '
     + 'data-assignment-id="' + assignmentId + '" data-item-id="' + it.item_id + '" '
     + 'aria-label="' + esc(it.title) + ', ' + statusLabel(st) + '">'
-    + '<span class="item-status ' + st + '" aria-hidden="true">' + statusLabel(st) + '</span>'
+    + '<span class="item-status" aria-hidden="true">' + statusGlyph(st) + '</span>'
     + '<span class="item-body">'
     + '  <span class="item-title">' + esc(it.title) + '</span>'
+    + '  <span class="item-state">' + statusLabel(st) + '</span>'
     + (it.description ? '<span class="item-desc">' + esc(it.description) + '</span>' : '')
-    + (blankLink ? '<span class="item-blank">' + blankLink + '</span>' : '')
+    + (it.blank_form_r2_path
+        ? '<a class="item-download" href="' + esc(R2_URL + '/' + it.blank_form_r2_path) + '" target="_blank" rel="noopener" download onclick="event.stopPropagation()">'
+          + '<span aria-hidden="true">&#11015;</span> Download form'
+          + '</a>'
+        : '')
     + '</span>'
     + '<span class="chev" aria-hidden="true">&rsaquo;</span>'
     + '</button>';
@@ -817,19 +775,21 @@ function openItemModal(assignmentId, itemId) {
   const st = statusOf(it.upload);
   const box = $('modalBox');
 
-  let body = '<h3 id="modalHeading">' + esc(it.title) + '</h3>'
-    + '<p class="sub">' + esc(a.event_name) + ' &middot; '
-    + esc(a.team_number) + ' ' + esc(a.team_name) + '</p>';
-
+  let body = '<span class="step-pill">' + statusLabel(st) + '</span>'
+    + '<h3 id="modalHeading">' + esc(it.title) + '</h3>'
+    + '<p class="sub">' + esc(a.event_name) + ' &middot; ' + esc(a.team_number) + ' ' + esc(a.team_name) + '</p>';
   if (it.description) {
-    body += '<p class="hint" style="margin-bottom:10px">' + esc(it.description) + '</p>';
+    body += '<p class="hint" style="margin-bottom:14px">' + esc(it.description) + '</p>';
   }
   if (it.blank_form_r2_path) {
-    body += '<p style="margin-bottom:14px;font-size:0.88rem">'
-      + '<a href="' + esc(R2_URL + '/' + it.blank_form_r2_path) + '" target="_blank" rel="noopener" '
-      + 'style="color:var(--ink);text-decoration:underline;font-weight:600">'
-      + '&#128203; View blank form (open / print)</a>'
-      + '</p>';
+    body += '<a class="download-banner" href="' + esc(R2_URL + '/' + it.blank_form_r2_path) + '" target="_blank" rel="noopener" download>'
+      + '<span class="db-icon" aria-hidden="true">&#11015;</span>'
+      + '<span class="db-body">'
+      +   '<span class="db-title">Download form</span>'
+      +   '<span class="db-sub">Open the blank PDF, print it, fill it out, then snap a photo below.</span>'
+      + '</span>'
+      + '<span class="db-arrow" aria-hidden="true">&rsaquo;</span>'
+      + '</a>';
   }
 
   if (st === 'pending') {
@@ -837,7 +797,6 @@ function openItemModal(assignmentId, itemId) {
   } else {
     body += renderUploadView(it.upload, st === 'approved');
   }
-
   box.innerHTML = body;
   openModal();
 
@@ -852,34 +811,35 @@ function openItemModal(assignmentId, itemId) {
 }
 
 function renderUploadPicker() {
-  // On touch devices: Camera + Library. On desktop: single "Upload" button.
   const single = !IS_TOUCH;
   let h = '<div class="source-picker' + (single ? ' single' : '') + '">';
   if (IS_TOUCH) {
     h += '<label class="source-btn">'
-       + '<div class="icon" aria-hidden="true">&#128247;</div>'
-       + '<div class="label">Take photo</div>'
+       + '<div class="source-icon" aria-hidden="true">&#128247;</div>'
+       + '<div class="source-label">Take photo</div>'
+       + '<div class="source-sub">Use the camera</div>'
        + '<input type="file" id="srcCamera" accept="image/*" capture="environment">'
        + '</label>'
        + '<label class="source-btn">'
-       + '<div class="icon" aria-hidden="true">&#128444;</div>'
-       + '<div class="label">Choose from library</div>'
+       + '<div class="source-icon" aria-hidden="true">&#128444;</div>'
+       + '<div class="source-label">Library</div>'
+       + '<div class="source-sub">Pick an existing photo</div>'
        + '<input type="file" id="srcLibrary" accept="image/*">'
        + '</label>';
   } else {
     h += '<label class="source-btn">'
-       + '<div class="icon" aria-hidden="true">&#128206;</div>'
-       + '<div class="label">Upload image</div>'
+       + '<div class="source-icon" aria-hidden="true">&#128206;</div>'
+       + '<div class="source-label">Upload image</div>'
+       + '<div class="source-sub">PNG or JPEG, any size</div>'
        + '<input type="file" id="srcLibrary" accept="image/*">'
        + '</label>';
   }
   h += '</div>'
     + '<img id="previewImg" class="preview-img" style="display:none" alt="">'
-    + '<div id="uploadStatus" class="status-line" role="status" aria-live="polite"></div>'
-    + '<div class="btn-row">'
-    + '<button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>'
-    + '<span class="spacer"></span>'
-    + '<button type="button" class="btn" id="saveBtn" disabled>Save</button>'
+    + '<div id="uploadStatus" class="status" role="status" aria-live="polite"></div>'
+    + '<div class="btn-row" style="margin-top:14px;justify-content:flex-end">'
+    +   '<button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>'
+    +   '<button type="button" class="btn btn-primary" id="saveBtn" disabled>Save</button>'
     + '</div>';
   return h;
 }
@@ -891,55 +851,43 @@ function renderUploadView(u, isApproved) {
     + (isApproved ? '<div class="stamp-overlay" aria-hidden="true">STAMPED</div>' : '')
     + '</div>'
     + '<div class="meta-line">'
-    + 'Uploaded ' + esc(fmtTimestamp(u.uploaded_at))
-    + (u.uploaded_by_name ? ' by ' + esc(u.uploaded_by_name) : '')
-    + (isApproved
-        ? '<br>Stamped ' + esc(fmtTimestamp(u.approved_at))
-        : '')
+    +   'Uploaded ' + esc(fmtTimestamp(u.uploaded_at))
+    +   (u.uploaded_by_name ? ' by ' + esc(u.uploaded_by_name) : '')
+    +   (isApproved ? '<br>Stamped ' + esc(fmtTimestamp(u.approved_at)) : '')
     + '</div>'
-    + '<div id="uploadStatus" class="status-line" role="status" aria-live="polite"></div>'
-    + '<div class="btn-row">'
-    + '<button type="button" class="btn btn-outline" onclick="closeModal()">Close</button>'
-    + '<span class="spacer"></span>'
-    + (!isApproved ? '<button type="button" class="btn btn-danger btn-sm" id="deleteBtn">Delete</button>' : '')
-    + (!isApproved ? '<button type="button" class="btn btn-sm" id="replaceBtn">Replace</button>' : '')
+    + '<div id="uploadStatus" class="status" role="status" aria-live="polite"></div>'
+    + '<div class="btn-row" style="margin-top:14px;justify-content:flex-end">'
+    +   '<button type="button" class="btn btn-outline" onclick="closeModal()">Close</button>'
+    +   (!isApproved ? '<button type="button" class="btn btn-danger btn-sm" id="deleteBtn">Delete</button>' : '')
+    +   (!isApproved ? '<button type="button" class="btn btn-primary btn-sm" id="replaceBtn">Replace</button>' : '')
     + '</div>';
 }
 
-/* Replace flow: skip the source picker, open the file dialog directly.
-   On cancel the modal stays put — no cache to bust. */
 function startReplace(assignmentId, itemId) {
   const input = document.createElement('input');
   input.type = 'file';
   input.accept = 'image/*';
   input.onchange = async () => {
-    const f = input.files && input.files[0];
-    if (!f) return;
-    // Reuse the same upload path: compress + R2 PUT + RPC.
+    const f = input.files && input.files[0]; if (!f) return;
     try {
-      setStatus('uploadStatus', '<span class="spinner" aria-hidden="true"></span>Preparing image&hellip;', 'progress');
+      setStatus('uploadStatus', '<span class="spinner"></span>Preparing image&hellip;', 'progress');
       const { blob, width, height } = await compressImage(f);
       _pendingBlob = blob;
       _pendingMeta = { width, height, bytes: blob.size, type: blob.type || 'image/jpeg' };
       await doUpload(assignmentId, itemId);
     } catch (err) {
-      setStatus('uploadStatus', 'Image error: ' + err.message, 'err');
+      setStatus('uploadStatus', 'Image error: ' + err.message, 'error');
     }
   };
   input.click();
 }
 
 function openModal() {
-  const bg = $('modalBg');
-  bg.classList.add('open');
-  bg.setAttribute('aria-hidden', 'false');
-  // Focus modal for keyboard users
+  $('modalBg').classList.add('open');
   setTimeout(() => $('modalBox').focus(), 0);
 }
 function closeModal() {
-  const bg = $('modalBg');
-  bg.classList.remove('open');
-  bg.setAttribute('aria-hidden', 'true');
+  $('modalBg').classList.remove('open');
   $('modalBox').innerHTML = '';
 }
 
@@ -950,7 +898,7 @@ function wireUpload(assignmentId, itemId) {
   const onPick = async (e) => {
     const f = e.target.files && e.target.files[0];
     if (!f) return;
-    setStatus('uploadStatus', '<span class="spinner" aria-hidden="true"></span>Preparing image&hellip;', 'progress');
+    setStatus('uploadStatus', '<span class="spinner"></span>Preparing image&hellip;', 'progress');
     try {
       const { blob, width, height } = await compressImage(f);
       _pendingBlob = blob;
@@ -960,7 +908,7 @@ function wireUpload(assignmentId, itemId) {
       $('saveBtn').disabled = false;
       setStatus('uploadStatus', '', '');
     } catch (err) {
-      setStatus('uploadStatus', 'Image error: ' + err.message, 'err');
+      setStatus('uploadStatus', 'Image error: ' + err.message, 'error');
     }
   };
   if (cam) cam.onchange = onPick;
@@ -998,69 +946,54 @@ async function doUpload(assignmentId, itemId) {
   const a = _data.assignments.find(x => x.assignment_id === assignmentId);
   if (!a) return;
   const path = 'redtape/' + encodeURIComponent(a.event_slug) + '/' + a.team_id + '/' + itemId + '.jpg';
-  setStatus('uploadStatus', '<span class="spinner" aria-hidden="true"></span>Filing paperwork&hellip;', 'progress');
+  setStatus('uploadStatus', '<span class="spinner"></span>Filing paperwork&hellip;', 'progress');
   try {
-    // 1. R2 PUT
     const r2 = await fetch(R2_URL + '/' + path, {
       method: 'PUT',
       headers: { 'Content-Type': _pendingMeta.type },
       body: _pendingBlob
     });
     if (!r2.ok) throw new Error('Upload failed (R2 ' + r2.status + ')');
-    // 2. DB record via RPC
     const db = await fetch(SB_URL + '/rest/v1/rpc/captain_record_upload', {
       method: 'POST', headers: HEADERS_WRITE,
       body: JSON.stringify({
-        p_assignment_id: assignmentId,
-        p_item_id: itemId,
-        p_apa_number: _identity.apa_number,
-        p_uploader_name: _identity.name,
-        p_r2_path: path,
-        p_bytes: _pendingMeta.bytes,
+        p_assignment_id: assignmentId, p_item_id: itemId,
+        p_apa_number: _identity.apa_number, p_uploader_name: _identity.name,
+        p_r2_path: path, p_bytes: _pendingMeta.bytes,
         p_content_type: _pendingMeta.type,
-        p_width: _pendingMeta.width,
-        p_height: _pendingMeta.height
+        p_width: _pendingMeta.width, p_height: _pendingMeta.height
       })
     });
     if (!db.ok) throw new Error('Record failed (' + db.status + ': ' + (await db.text()).slice(0, 120) + ')');
-    setStatus('uploadStatus', '✓ Filed. Awaiting review.', 'ok');
     _pendingBlob = null; _pendingMeta = null;
-    setTimeout(async () => { closeModal(); await loadAssignments(); }, 800);
+    closeModal();
+    toast('✓ Filed. Awaiting review.');
+    await loadAssignments();
   } catch (e) {
-    setStatus('uploadStatus', 'Failed: ' + e.message, 'err');
+    setStatus('uploadStatus', 'Failed: ' + e.message, 'error');
   }
 }
 
 async function deleteUpload(uploadId) {
-  if (!confirm('Delete this submission? You can re-upload after.')) return;
-  setStatus('uploadStatus', '<span class="spinner" aria-hidden="true"></span>Deleting&hellip;', 'progress');
+  if (!confirm('Remove this submission? You can re-upload after.')) return;
+  setStatus('uploadStatus', '<span class="spinner"></span>Removing&hellip;', 'progress');
   try {
     const r = await fetch(SB_URL + '/rest/v1/rpc/captain_delete_upload', {
       method: 'POST', headers: HEADERS_WRITE,
       body: JSON.stringify({ p_upload_id: uploadId, p_apa_number: _identity.apa_number })
     });
     if (!r.ok) throw new Error('Delete failed (' + r.status + ')');
-    const j = await r.json();
-    if (j && j.r2_path) {
-      try { await fetch(R2_URL + '/' + j.r2_path, { method: 'DELETE' }); } catch (_) {}
-    }
-    setStatus('uploadStatus', '✓ Deleted.', 'ok');
-    setTimeout(async () => { closeModal(); await loadAssignments(); }, 600);
+    closeModal();
+    toast('Removed.');
+    await loadAssignments();
   } catch (e) {
-    setStatus('uploadStatus', 'Failed: ' + e.message, 'err');
+    setStatus('uploadStatus', 'Failed: ' + e.message, 'error');
   }
 }
 
-/* ── Auto-updater ──────────────────────────────────────────────────────
-   Polls apa_core.apps.RedTape every 30s + on visibility change. When a
-   newer version is published, surfaces a reload banner. Reload uses
-   location.replace + cache-bust to escape GitHub Pages' Fastly CDN
-   cache (see Slate 3.54 — without this, a reload sometimes serves the
-   stale HTML for ~10 min).
-   ─────────────────────────────────────────────────────────────────── */
+/* ── Auto-updater (modal-style overlay, matches PaperTrail) ───────── */
 const POLL_INTERVAL_MS = 30000;
 let _knownLatestVersion = APP_VERSION;
-
 async function checkVersion() {
   try {
     const r = await fetch(SB_URL + '/rest/v1/apps?app_name=eq.' + APP_NAME + '&select=version', {
@@ -1073,26 +1006,13 @@ async function checkVersion() {
     if (!rows.length) return;
     const v = rows[0].version;
     if (!v || v === APP_VERSION) return;
-    if (v === _knownLatestVersion) return;  // already showing this banner
+    if (v === _knownLatestVersion) return;
     _knownLatestVersion = v;
-    showUpdateBanner(v);
-  } catch (_) {
-    // Network blip; quietly retry on next interval.
-  }
+    $('uoVersion').textContent = 'v' + v;
+    $('updateOverlay').classList.add('open');
+  } catch (_) { /* network blip — silent retry */ }
 }
-
-function showUpdateBanner(newVersion) {
-  const banner = $('updateBanner');
-  banner.hidden = false;
-  banner.innerHTML = '<span class="grow">RedTape v' + esc(newVersion)
-    + ' is ready &mdash; reload to get the latest.</span>'
-    + '<button type="button" class="btn" onclick="forceReload()">Reload</button>';
-}
-
 function forceReload() {
-  // Bust the CDN cache by adding a fresh query-param then using
-  // location.replace (not reload) so we don't keep coming back to the
-  // same stale cached response. Matches the Slate 3.54 fix.
   const u = new URL(location.href);
   u.searchParams.set('_v', Date.now());
   location.replace(u.toString());
@@ -1101,24 +1021,20 @@ function forceReload() {
 /* ── Init ───────────────────────────────────────────────────────────── */
 $('loginBtn').onclick = doLogin;
 $('apaInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-$('signOutBtn').onclick = signOut;
 $('modalBg').addEventListener('click', e => { if (e.target === $('modalBg')) closeModal(); });
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && $('modalBg').classList.contains('open')) closeModal();
 });
 
-$('formNo').textContent = 'FORM RT-001 · REV ' + APP_VERSION;
 $('appFooter').textContent = APP_NAME + ' v' + APP_VERSION + ' · South Portland Metro APA';
-
-// Expose for inline onclicks
-window.closeModal  = closeModal;
+window.closeModal = closeModal;
 window.forceReload = forceReload;
 window.loadAssignments = loadAssignments;
+window.signOut = signOut;
 
 if (_identity && _identity.apa_number) enterDashboard();
-else $('apaInput').focus();
+else { $('loginCard').style.display = ''; $('apaInput').focus(); }
 
-// Auto-updater wiring
 checkVersion();
 setInterval(checkVersion, POLL_INTERVAL_MS);
 document.addEventListener('visibilitychange', () => {
