@@ -299,12 +299,21 @@
   .download-banner .db-icon {
     font-size: 1.5rem; line-height: 1; flex-shrink: 0; color: var(--spm-blue);
   }
-  .download-banner .db-body { flex: 1; min-width: 0; }
+  .download-banner .db-body {
+    flex: 1; min-width: 0;
+    /* Spans inside need block flow — without these, title and sub
+       render inline and collide ("Download formOpen the blank PDF..."). */
+    display: flex; flex-direction: column;
+  }
   .download-banner .db-title {
-    font-size: 0.9rem; font-weight: 800; color: var(--spm-blue);
+    display: block;
+    font-size: 0.92rem; font-weight: 800; color: var(--spm-blue);
+    line-height: 1.25;
   }
   .download-banner .db-sub {
-    font-size: 0.78rem; color: var(--text-dim); margin-top: 1px;
+    display: block;
+    font-size: 0.78rem; color: var(--text-dim);
+    margin-top: 2px; line-height: 1.35;
   }
   .download-banner .db-arrow { color: var(--spm-blue); font-size: 1.2rem; }
 
@@ -502,7 +511,7 @@
      (see Slate 3.54 for the bug this fixes).
    ══════════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.5';
+const APP_VERSION = '0.6';
 const APP_NAME = 'RedTape';
 const SB_URL = 'https://dqzbekoaysgaiqljueac.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxemJla29heXNnYWlxbGp1ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzA5NzgsImV4cCI6MjA5MDc0Njk3OH0.cCdGxZ4zEFzU_r6lWSDeoNWG67Q4MSYCAtpds035dfU';
