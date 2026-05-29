@@ -231,6 +231,10 @@
   .chip-due.urgent { background: #fee2e2; color: var(--urgent); }
   .chip-due.overdue { background: var(--bad); color: #fff; }
   .chip-due.complete { background: var(--ok-bg); color: var(--ok); }
+  .chip-role {
+    background: var(--paper); color: var(--ink);
+    border: 1px dashed var(--ink);
+  }
 
   /* ── Item row ──────────────────────────────────────────────────────── */
   .item-row {
@@ -269,6 +273,12 @@
     color: var(--muted); font-size: 1.3rem; line-height: 1;
     flex-shrink: 0;
   }
+  .item-blank { display: block; margin-top: 4px; font-size: 0.8rem; }
+  .item-blank .blank-link {
+    color: var(--ink); text-decoration: underline;
+    font-weight: 600;
+  }
+  .item-blank .blank-link:hover { color: var(--primary); }
 
   /* ── Empty state ───────────────────────────────────────────────────── */
   .empty {
@@ -522,7 +532,7 @@
    Fastly CDN cache (see Slate 3.54).
    ══════════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.2';
+const APP_VERSION = '0.3';
 const APP_NAME = 'RedTape';
 const SB_URL = 'https://dqzbekoaysgaiqljueac.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxemJla29heXNnYWlxbGp1ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzA5NzgsImV4cCI6MjA5MDc0Njk3OH0.cCdGxZ4zEFzU_r6lWSDeoNWG67Q4MSYCAtpds035dfU';
@@ -747,14 +757,16 @@ function renderAssignments() {
       ? '<span class="chip chip-due ' + due.cls + (allStamped ? ' complete' : '') + '">'
         + (allStamped ? '✓ ' : '') + esc(due.text) + '</span>'
       : '';
+    const roleChip = a.role
+      ? '<span class="chip chip-role">' + esc(a.role) + '</span>'
+      : '';
 
     return '<div class="card">'
       + '  <div class="assignment-header">'
       + '    <div class="event-name">' + esc(a.event_name) + '</div>'
-      + '    <div class="team-name">' + esc(a.team_number) + ' &middot; ' + esc(a.team_name)
-      + (a.division_name ? ' &middot; ' + esc(a.division_name) : '') + '</div>'
+      + '    <div class="team-name">' + esc(a.team_number) + ' &middot; ' + esc(a.team_name) + '</div>'
       + (a.event_description ? '<div class="event-desc">' + esc(a.event_description) + '</div>' : '')
-      + '    <div class="meta-row">' + progChip + dueChip + '</div>'
+      + '    <div class="meta-row">' + roleChip + progChip + dueChip + '</div>'
       + '  </div>'
       + '  <h2>Required forms <span class="meta">'
       +     a.items.length + ' item' + (a.items.length === 1 ? '' : 's') + '</span></h2>'
@@ -778,6 +790,11 @@ function renderAssignments() {
 
 function itemRowHtml(assignmentId, it) {
   const st = statusOf(it.upload);
+  // Blank form is admin-uploaded — captain sees a small "View blank form"
+  // link they can tap to open + print before filling out.
+  const blankLink = it.blank_form_r2_path
+    ? '<a class="blank-link" href="' + esc(R2_URL + '/' + it.blank_form_r2_path) + '" target="_blank" rel="noopener" onclick="event.stopPropagation()">View blank form</a>'
+    : '';
   return '<button type="button" class="item-row ' + st + '" '
     + 'data-assignment-id="' + assignmentId + '" data-item-id="' + it.item_id + '" '
     + 'aria-label="' + esc(it.title) + ', ' + statusLabel(st) + '">'
@@ -785,6 +802,7 @@ function itemRowHtml(assignmentId, it) {
     + '<span class="item-body">'
     + '  <span class="item-title">' + esc(it.title) + '</span>'
     + (it.description ? '<span class="item-desc">' + esc(it.description) + '</span>' : '')
+    + (blankLink ? '<span class="item-blank">' + blankLink + '</span>' : '')
     + '</span>'
     + '<span class="chev" aria-hidden="true">&rsaquo;</span>'
     + '</button>';
@@ -804,7 +822,14 @@ function openItemModal(assignmentId, itemId) {
     + esc(a.team_number) + ' ' + esc(a.team_name) + '</p>';
 
   if (it.description) {
-    body += '<p class="hint" style="margin-bottom:14px">' + esc(it.description) + '</p>';
+    body += '<p class="hint" style="margin-bottom:10px">' + esc(it.description) + '</p>';
+  }
+  if (it.blank_form_r2_path) {
+    body += '<p style="margin-bottom:14px;font-size:0.88rem">'
+      + '<a href="' + esc(R2_URL + '/' + it.blank_form_r2_path) + '" target="_blank" rel="noopener" '
+      + 'style="color:var(--ink);text-decoration:underline;font-weight:600">'
+      + '&#128203; View blank form (open / print)</a>'
+      + '</p>';
   }
 
   if (st === 'pending') {
