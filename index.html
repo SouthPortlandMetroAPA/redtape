@@ -54,12 +54,23 @@
     max-width: 720px; margin: 0 auto;
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
   }
+  /* Wordmark — sized at 1.5rem (24px) instead of PaperTrail's 1.15rem.
+     "RedTape" is a 7-char name with brand personality; PaperTrail's
+     understated size left it without presence on a shared gradient. The
+     bicolor split ("Red" solid / "Tape" dimmed) restores the identity
+     hook the v0.2 bureaucracy theme had, expressed in the v0.4 SPM
+     palette — no palette break, but each SPM app now reads as itself
+     at a glance instead of being template-twins. */
   .header h1 {
-    font-size: 1.15rem; font-weight: 900; margin: 0;
-    letter-spacing: -0.01em; display: inline-flex; align-items: center; gap: 8px;
+    font-size: 1.5rem; font-weight: 900; margin: 0;
+    letter-spacing: -0.025em;
+    display: inline-flex; align-items: center; gap: 10px;
+    line-height: 1;
   }
+  .header h1 .wm-red  { color: #fff; }
+  .header h1 .wm-tape { color: rgba(255,255,255,0.62); }
   .header h1 .brand-dot {
-    display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+    display: inline-block; width: 10px; height: 10px; border-radius: 50%;
     background: #fff; box-shadow: 0 0 0 3px rgba(255,255,255,0.25);
   }
   .header .who {
@@ -407,7 +418,7 @@
 
 <header class="header">
   <div class="header-inner">
-    <h1><span class="brand-dot"></span>RedTape</h1>
+    <h1><span class="brand-dot" aria-hidden="true"></span><span class="wm-red">Red</span><span class="wm-tape">Tape</span></h1>
     <div class="who" id="whoBlock"></div>
   </div>
 </header>
@@ -491,7 +502,7 @@
      (see Slate 3.54 for the bug this fixes).
    ══════════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.4';
+const APP_VERSION = '0.5';
 const APP_NAME = 'RedTape';
 const SB_URL = 'https://dqzbekoaysgaiqljueac.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxemJla29heXNnYWlxbGp1ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzA5NzgsImV4cCI6MjA5MDc0Njk3OH0.cCdGxZ4zEFzU_r6lWSDeoNWG67Q4MSYCAtpds035dfU';
