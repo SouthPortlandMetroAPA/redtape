@@ -573,7 +573,7 @@
      (see Slate 3.54 for the bug this fixes).
    ══════════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.8';
+const APP_VERSION = '0.9';
 const APP_NAME = 'RedTape';
 const SB_URL = 'https://dqzbekoaysgaiqljueac.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxemJla29heXNnYWlxbGp1ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzA5NzgsImV4cCI6MjA5MDc0Njk3OH0.cCdGxZ4zEFzU_r6lWSDeoNWG67Q4MSYCAtpds035dfU';
@@ -961,6 +961,11 @@ function renderUploadTile(u, isStamped) {
 }
 
 function renderUploadPicker() {
+  // v0.9: multi-file. Library picker accepts multiple images at once
+  // (Take photo stays single — camera is one shot at a time). No preview
+  // step + no Save button — uploads start immediately on file pick,
+  // status line shows "Uploading N of M…" progress. Captain can re-open
+  // the modal afterward to add more.
   const single = !IS_TOUCH;
   let h = '<div class="source-picker' + (single ? ' single' : '') + '">';
   if (IS_TOUCH) {
@@ -973,23 +978,21 @@ function renderUploadPicker() {
        + '<label class="source-btn">'
        + '<div class="source-icon" aria-hidden="true">&#128444;</div>'
        + '<div class="source-label">Library</div>'
-       + '<div class="source-sub">Pick an existing photo</div>'
-       + '<input type="file" id="srcLibrary" accept="image/*">'
+       + '<div class="source-sub">Pick one or more</div>'
+       + '<input type="file" id="srcLibrary" accept="image/*" multiple>'
        + '</label>';
   } else {
     h += '<label class="source-btn">'
        + '<div class="source-icon" aria-hidden="true">&#128206;</div>'
-       + '<div class="source-label">Upload image</div>'
-       + '<div class="source-sub">PNG or JPEG, any size</div>'
-       + '<input type="file" id="srcLibrary" accept="image/*">'
+       + '<div class="source-label">Upload images</div>'
+       + '<div class="source-sub">PNG / JPEG, pick one or many</div>'
+       + '<input type="file" id="srcLibrary" accept="image/*" multiple>'
        + '</label>';
   }
   h += '</div>'
-    + '<img id="previewImg" class="preview-img" style="display:none" alt="">'
     + '<div id="uploadStatus" class="status" role="status" aria-live="polite"></div>'
     + '<div class="btn-row" style="margin-top:14px;justify-content:flex-end">'
-    +   '<button type="button" class="btn btn-outline" onclick="closeModal()">Cancel</button>'
-    +   '<button type="button" class="btn btn-primary" id="saveBtn" disabled>Save</button>'
+    +   '<button type="button" class="btn btn-outline" onclick="closeModal()">Close</button>'
     + '</div>';
   return h;
 }
@@ -1003,29 +1006,66 @@ function closeModal() {
   $('modalBox').innerHTML = '';
 }
 
-let _pendingBlob = null, _pendingMeta = null;
-
+/* v0.9 multi-upload. Picker either gets 1 file (camera) or many (library
+   multi-select). We loop sequentially — parallel uploads work but the
+   progress is clearer one at a time, and PostgREST/R2 throughput isn't
+   a bottleneck for ≤ ~10 files. On any failure, status shows which
+   file # failed; previously-completed uploads are kept. */
 function wireUpload(assignmentId, itemId) {
   const cam = $('srcCamera'); const lib = $('srcLibrary');
   const onPick = async (e) => {
-    const f = e.target.files && e.target.files[0];
-    if (!f) return;
-    setStatus('uploadStatus', '<span class="spinner"></span>Preparing image&hellip;', 'progress');
-    try {
-      const { blob, width, height } = await compressImage(f);
-      _pendingBlob = blob;
-      _pendingMeta = { width, height, bytes: blob.size, type: blob.type || 'image/jpeg' };
-      $('previewImg').src = URL.createObjectURL(blob);
-      $('previewImg').style.display = 'block';
-      $('saveBtn').disabled = false;
-      setStatus('uploadStatus', '', '');
-    } catch (err) {
-      setStatus('uploadStatus', 'Image error: ' + err.message, 'error');
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    e.target.value = '';  // reset so re-picking same files refires
+    let done = 0;
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const n = i + 1, total = files.length;
+      const label = total === 1 ? 'Filing paperwork' : 'Uploading ' + n + ' of ' + total;
+      setStatus('uploadStatus', '<span class="spinner"></span>' + label + '&hellip;', 'progress');
+      try {
+        await uploadOneFile(assignmentId, itemId, f);
+        done++;
+      } catch (err) {
+        setStatus('uploadStatus',
+          'File ' + n + ' of ' + total + ' failed: ' + err.message
+          + (done ? ' (' + done + ' filed earlier)' : ''),
+          'error');
+        await loadAssignments();
+        openItemModal(assignmentId, itemId);
+        return;
+      }
     }
+    toast(done === 1 ? '✓ Filed.' : '✓ ' + done + ' filed.');
+    await loadAssignments();
+    openItemModal(assignmentId, itemId);
   };
   if (cam) cam.onchange = onPick;
   if (lib) lib.onchange = onPick;
-  $('saveBtn').onclick = () => doUpload(assignmentId, itemId);
+}
+
+async function uploadOneFile(assignmentId, itemId, file) {
+  const a = _data.assignments.find(x => x.assignment_id === assignmentId);
+  if (!a) throw new Error('Assignment missing');
+  const { blob, width, height } = await compressImage(file);
+  const contentType = blob.type || 'image/jpeg';
+  const unique = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  const path = 'redtape/' + encodeURIComponent(a.event_slug) + '/' + assignmentId + '/' + itemId + '/' + unique + '.jpg';
+  const r2 = await fetch(R2_URL + '/' + path, {
+    method: 'PUT', headers: { 'Content-Type': contentType }, body: blob
+  });
+  if (!r2.ok) throw new Error('R2 ' + r2.status);
+  const db = await fetch(SB_URL + '/rest/v1/rpc/captain_record_upload', {
+    method: 'POST', headers: HEADERS_WRITE,
+    body: JSON.stringify({
+      p_assignment_id: assignmentId, p_item_id: itemId,
+      p_apa_number: _identity.apa_number, p_uploader_name: _identity.name,
+      p_r2_path: path, p_bytes: blob.size,
+      p_content_type: contentType,
+      p_width: width, p_height: height
+    })
+  });
+  if (!db.ok) throw new Error('DB ' + db.status);
 }
 
 async function compressImage(file) {
@@ -1050,48 +1090,6 @@ async function compressImage(file) {
     return { blob, width: w, height: h };
   } finally {
     URL.revokeObjectURL(url);
-  }
-}
-
-async function doUpload(assignmentId, itemId) {
-  if (!_pendingBlob) return;
-  const a = _data.assignments.find(x => x.assignment_id === assignmentId);
-  if (!a) return;
-  // v0.8 path fix: include assignmentId (always non-null) + per-upload
-  // unique suffix so multi-upload doesn't clobber. The previous scheme
-  // used a.team_id (NULL for PDF-roster assignments → literal "null"
-  // collided across ALL teams + items + uploads). assignmentId is unique
-  // per (event, team_number); the random suffix prevents same-cell
-  // collisions when a captain uploads multiple submissions.
-  const unique = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
-  const path = 'redtape/' + encodeURIComponent(a.event_slug) + '/' + assignmentId + '/' + itemId + '/' + unique + '.jpg';
-  setStatus('uploadStatus', '<span class="spinner"></span>Filing paperwork&hellip;', 'progress');
-  try {
-    const r2 = await fetch(R2_URL + '/' + path, {
-      method: 'PUT',
-      headers: { 'Content-Type': _pendingMeta.type },
-      body: _pendingBlob
-    });
-    if (!r2.ok) throw new Error('Upload failed (R2 ' + r2.status + ')');
-    const db = await fetch(SB_URL + '/rest/v1/rpc/captain_record_upload', {
-      method: 'POST', headers: HEADERS_WRITE,
-      body: JSON.stringify({
-        p_assignment_id: assignmentId, p_item_id: itemId,
-        p_apa_number: _identity.apa_number, p_uploader_name: _identity.name,
-        p_r2_path: path, p_bytes: _pendingMeta.bytes,
-        p_content_type: _pendingMeta.type,
-        p_width: _pendingMeta.width, p_height: _pendingMeta.height
-      })
-    });
-    if (!db.ok) throw new Error('Record failed (' + db.status + ': ' + (await db.text()).slice(0, 120) + ')');
-    _pendingBlob = null; _pendingMeta = null;
-    // Reload + reopen modal so captain can immediately add another submission
-    // for this same item (cert-form pattern: many sigs per item).
-    toast('✓ Filed.');
-    await loadAssignments();
-    openItemModal(assignmentId, itemId);
-  } catch (e) {
-    setStatus('uploadStatus', 'Failed: ' + e.message, 'error');
   }
 }
 
