@@ -457,6 +457,12 @@
     text-align: center; max-width: 360px;
   }
   .uo-card h2 { margin: 0 0 8px; font-size: 1.05rem; font-weight: 800; }
+  .uo-spinner {
+    display: inline-block; width: 24px; height: 24px;
+    border: 3px solid var(--border); border-top-color: var(--spm-blue);
+    border-radius: 50%; animation: spin 0.7s linear infinite;
+    margin-bottom: 10px;
+  }
 
   /* ── Footer ────────────────────────────────────────────────────── */
   footer {
@@ -529,14 +535,13 @@
   <div class="modal" id="modalBox" tabindex="-1"><!-- rendered by JS --></div>
 </div>
 
-<!-- Auto-update overlay -->
+<!-- Auto-update overlay (matches PaperTrail / BreakOut / OurRack pattern:
+     show "Reloading…" + spinner + auto-reload; no manual button). -->
 <div class="update-overlay" id="updateOverlay">
   <div class="uo-card">
+    <div class="uo-spinner" aria-hidden="true"></div>
     <h2>New version available</h2>
-    <p style="margin:0 0 14px;color:var(--text-dim);font-size:0.88rem">
-      RedTape <span id="uoVersion"></span> is ready.
-    </p>
-    <button type="button" class="btn btn-primary" onclick="forceReload()">Reload</button>
+    <p style="margin:0;color:var(--text-dim);font-size:0.88rem">Reloading&hellip;</p>
   </div>
 </div>
 
@@ -573,7 +578,7 @@
      (see Slate 3.54 for the bug this fixes).
    ══════════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.9';
+const APP_VERSION = '0.10';
 const APP_NAME = 'RedTape';
 const SB_URL = 'https://dqzbekoaysgaiqljueac.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxemJla29heXNnYWlxbGp1ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzA5NzgsImV4cCI6MjA5MDc0Njk3OH0.cCdGxZ4zEFzU_r6lWSDeoNWG67Q4MSYCAtpds035dfU';
@@ -1123,10 +1128,15 @@ async function deleteUpload(uploadId) {
   }
 }
 
-/* ── Auto-updater (modal-style overlay, matches PaperTrail) ───────── */
+/* ── Auto-updater (modal-style overlay, matches PaperTrail / BreakOut /
+   OurRack / PreShot family pattern: show overlay then auto-reload, no
+   manual button). Reload uses location.replace with a cache-bust query
+   so we escape Fastly's stale-HTML cache (see Slate 3.54 for the bug
+   this fixes). */
 const POLL_INTERVAL_MS = 30000;
-let _knownLatestVersion = APP_VERSION;
+let _versionMismatch = false;
 async function checkVersion() {
+  if (_versionMismatch) return;
   try {
     const r = await fetch(SB_URL + '/rest/v1/apps?app_name=eq.' + APP_NAME + '&select=version', {
       headers: { apikey: SB_ANON, Authorization: 'Bearer ' + SB_ANON,
@@ -1138,10 +1148,12 @@ async function checkVersion() {
     if (!rows.length) return;
     const v = rows[0].version;
     if (!v || v === APP_VERSION) return;
-    if (v === _knownLatestVersion) return;
-    _knownLatestVersion = v;
-    $('uoVersion').textContent = 'v' + v;
+    _versionMismatch = true;
     $('updateOverlay').classList.add('open');
+    // Brief delay so the user sees the indicator, then auto-reload with
+    // cache-bust so Fastly serves the fresh HTML (location.reload alone
+    // sometimes returns the cached copy for ~10 min).
+    setTimeout(forceReload, 1200);
   } catch (_) { /* network blip — silent retry */ }
 }
 function forceReload() {
