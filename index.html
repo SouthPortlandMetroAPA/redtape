@@ -336,6 +336,18 @@
     transition: transform 0.18s;
   }
   .upload-tile .tile-img:hover img { transform: scale(1.04); }
+  .upload-tile .tile-pdf { background: #fffbeb; }
+  .upload-tile .pdf-placeholder {
+    width: 100%; height: 100%;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px; color: #92400e;
+  }
+  .upload-tile .pdf-glyph { font-size: 2.2rem; line-height: 1; }
+  .upload-tile .pdf-label {
+    font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
   .upload-tile .tile-meta {
     font-size: 0.72rem; color: var(--text-dim);
     padding: 6px 8px; line-height: 1.3;
@@ -561,7 +573,7 @@
      (see Slate 3.54 for the bug this fixes).
    ══════════════════════════════════════════════════════════════════════ */
 
-const APP_VERSION = '0.7';
+const APP_VERSION = '0.8';
 const APP_NAME = 'RedTape';
 const SB_URL = 'https://dqzbekoaysgaiqljueac.supabase.co';
 const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxemJla29heXNnYWlxbGp1ZWFjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNzA5NzgsImV4cCI6MjA5MDc0Njk3OH0.cCdGxZ4zEFzU_r6lWSDeoNWG67Q4MSYCAtpds035dfU';
@@ -921,10 +933,21 @@ function openItemModal(assignmentId, itemId) {
 
 function renderUploadTile(u, isStamped) {
   const url = R2_URL + '/' + u.r2_path;
+  // v0.8: admin upload-on-behalf may be a PDF; render a PDF tile instead
+  // of a broken <img>. Detection: stored content_type OR .pdf extension.
+  const isPdf = (u.content_type === 'application/pdf') || /\.pdf$/i.test(u.r2_path || '');
+  const tileMedia = isPdf
+    ? '<a href="' + esc(url) + '" target="_blank" rel="noopener" class="tile-img tile-pdf">'
+      +   '<div class="pdf-placeholder">'
+      +     '<div class="pdf-glyph" aria-hidden="true">&#128196;</div>'
+      +     '<div class="pdf-label">PDF</div>'
+      +   '</div>'
+      + '</a>'
+    : '<a href="' + esc(url) + '" target="_blank" rel="noopener" class="tile-img">'
+      +   '<img src="' + esc(url) + '" alt="Submitted photo">'
+      + '</a>';
   return '<div class="upload-tile" role="listitem">'
-    + '<a href="' + esc(url) + '" target="_blank" rel="noopener" class="tile-img">'
-    +   '<img src="' + esc(url) + '" alt="Submitted photo">'
-    + '</a>'
+    + tileMedia
     + (isStamped ? '' :
         '<button type="button" class="tile-delete" data-id="' + u.id + '" aria-label="Remove this submission">'
         + '<span aria-hidden="true">&times;</span>'
@@ -1034,7 +1057,14 @@ async function doUpload(assignmentId, itemId) {
   if (!_pendingBlob) return;
   const a = _data.assignments.find(x => x.assignment_id === assignmentId);
   if (!a) return;
-  const path = 'redtape/' + encodeURIComponent(a.event_slug) + '/' + a.team_id + '/' + itemId + '.jpg';
+  // v0.8 path fix: include assignmentId (always non-null) + per-upload
+  // unique suffix so multi-upload doesn't clobber. The previous scheme
+  // used a.team_id (NULL for PDF-roster assignments → literal "null"
+  // collided across ALL teams + items + uploads). assignmentId is unique
+  // per (event, team_number); the random suffix prevents same-cell
+  // collisions when a captain uploads multiple submissions.
+  const unique = Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10);
+  const path = 'redtape/' + encodeURIComponent(a.event_slug) + '/' + assignmentId + '/' + itemId + '/' + unique + '.jpg';
   setStatus('uploadStatus', '<span class="spinner"></span>Filing paperwork&hellip;', 'progress');
   try {
     const r2 = await fetch(R2_URL + '/' + path, {
